@@ -1,0 +1,518 @@
+#include "zmodifyer.h"
+#include <vector>
+
+// ---------------------------
+// exception messages
+
+#define kEverythingIsOk "Everything is Ok"
+#define kUserErrorMessage "Incorrect command line"
+#define kNoFormats "7-Zip cannot find the code that works with archives."
+#define kUnsupportedArcTypeMessage "Unsupported archive type"
+#define kDefaultSfxModule L"7zCon.sfx"
+
+// 최초 한번만 실행
+void zmodifyer::init() {
+
+	static bool first = true;
+
+	if( !first )
+		return;
+
+	first = false;
+
+	//g_StdOut.SetStream( NULL );
+
+#if defined(_WIN32) && !defined(UNDER_CE)
+	SetFileApisToOEM(); // ??
+#endif
+}
+
+zmodifyer::zmodifyer(wchar_t const * file_name)
+	: outStream_( 0 )
+	, file_name_(file_name ? file_name : L"")
+	, codecs_(0) 
+{
+	init();
+
+	memset( key, 0, sizeof(key) );
+
+	// 압축 코덱 생성
+	codecs_ = new CCodecs;
+	HRESULT result = codecs_->Load();
+	if (result != S_OK)
+	{
+		delete codecs_;
+		codecs_ = 0;
+		//throw CSystemException(result);
+		return;
+	}
+
+	#if defined(_WIN32) && defined(_7ZIP_LARGE_PAGES)
+	if (options.LargePages)
+	{
+		SetLargePageSize();
+		NSecurity::EnableLockMemoryPrivilege();
+	}
+	#endif
+
+	/*
+	// 여기서 부터는 각 함수마다 실행해야함
+
+	// 커맨드 스트링
+	UStringVector commandStrings;
+	// 이런식으로.
+	commandStrings.Add( L"a" );
+	commandStrings.Add( L"7zip.7z" );
+	commandStrings.Add( L"a.txt" );
+	commandStrings.Add( L"b.txt" );
+
+	// 파싱된 커맨드라인 정보로 options 셋팅 ------------
+	CArchiveCommandLineOptions options;
+	OptionSetting( commandStrings, options );
+	//------------
+
+	// 압축파일 형식 인덱스 추출.
+	CIntVector formatIndices;
+	if (!codecs_->FindFormatForArchiveType(options.ArcType, formatIndices))
+		throw kUnsupportedArcTypeMessage;
+		*/
+}
+
+zmodifyer::~zmodifyer() {
+	if( codecs_ )
+		delete codecs_;
+}
+
+unsigned char * zmodifyer::get( UString & file_name, size_t & size, wchar_t const * password /* = 0 */ )
+{
+	// 커맨드 스트링
+	UStringVector commandStrings;
+
+	commandStrings.Add( L"G" );
+
+	if( password )
+	{	
+		UString pw( L"-p" );
+		commandStrings.Add( (pw + password) );
+	}
+
+	commandStrings.Add( file_name_ );
+
+	commandStrings.Add( file_name );
+
+	// 파싱된 커맨드라인 정보로 options 셋팅 ------------
+	CArchiveCommandLineOptions options;
+	OptionSetting( commandStrings, options );
+	options.OverwriteMode = NExtract::NOverwriteMode::kWithoutPrompt; // 덮어쓰기 할때 묻지마라.
+	//------------
+
+	// 압축파일 형식 인덱스 추출.
+	CIntVector formatIndices;
+	if (!codecs_->FindFormatForArchiveType(options.ArcType, formatIndices))
+	{
+		throw kUnsupportedArcTypeMessage;
+	}
+
+	bool isExtractGroupCommand = options.Command.IsFromExtractGroup();
+
+	if (codecs_->Formats.Size() == 0 &&
+		(isExtractGroupCommand ||
+		options.Command.CommandType == NCommandType::kList ||
+		options.Command.IsFromUpdateGroup()))
+		throw kNoFormats;
+
+	// 압축 해제
+	if (isExtractGroupCommand)
+	{
+		CExtractCallbackConsole *ecs = new CExtractCallbackConsole;
+		CMyComPtr<IFolderArchiveExtractCallback> extractCallback = ecs;
+
+		//outStream_.clear();
+
+		ecs->OutStream = &outStream_;
+
+#ifndef _NO_CRYPTO
+		ecs->PasswordIsDefined = options.PasswordEnabled;
+		ecs->Password = options.Password;
+#endif
+
+		ecs->Init();
+
+		COpenCallbackConsole openCallback;
+		openCallback.OutStream = &outStream_;
+
+#ifndef _NO_CRYPTO
+		openCallback.PasswordIsDefined = options.PasswordEnabled;
+		openCallback.Password = options.Password;
+#endif
+
+		CExtractOptions eo;
+		eo.StdInMode = options.StdInMode;
+		eo.StdOutMode = options.StdOutMode;
+		eo.PathMode = options.Command.GetPathMode();
+		eo.TestMode = options.Command.IsTestMode();
+		eo.OverwriteMode = options.OverwriteMode;
+		eo.OutputDir = options.OutputDir;
+		eo.YesToAll = options.YesToAll;
+		eo.CalcCrc = options.CalcCrc;
+
+#if !defined(_7ZIP_ST) && !defined(_SFX)
+		eo.Properties = options.ExtractProperties;
+#endif
+
+		UString errorMessage;
+		CDecompressStat stat;
+		HRESULT result = DecompressArchives(
+			codecs_,
+			formatIndices,
+			options.ArchivePathsSorted,
+			options.ArchivePathsFullSorted,
+			options.WildcardCensor.Pairs.Front().Head,
+			eo, &openCallback, ecs, errorMessage, stat);
+	}
+
+	/*
+	//버퍼 사이즈 얻기
+	outStream_.seekg(0,std::iostream::end);
+	size=outStream_.tellg();
+	outStream_.seekg(0);
+
+	unsigned char * buf = 0;
+	
+	if( size != std::iostream::end )
+	{
+		buf = new unsigned char[size];
+
+		outStream_.read( (char*)buf, size );
+	}
+
+	return buf;
+	*/
+
+	return 0;
+}
+
+// file_name.empty() 이면 모든 파일 압축해제
+void zmodifyer::extract(UStringVector & file_names, wchar_t const * password, wchar_t const * outDir, bool allPath)
+{
+	// 커맨드 스트링
+	UStringVector commandStrings;
+
+	if( allPath )
+		commandStrings.Add( L"x" );
+	else
+		commandStrings.Add( L"e" );
+
+	if( password )
+	{	
+		UString pw( L"-p" );
+		commandStrings.Add( (pw + password) );
+	}
+	if( outDir )
+	{
+		UString od( L"-o" );
+		commandStrings.Add( (od + outDir) );
+	}
+	commandStrings.Add( file_name_ );
+
+	for( int i=0; i<file_names.Size(); ++i )
+		commandStrings.Add( file_names[i] );
+
+	// 파싱된 커맨드라인 정보로 options 셋팅 ------------
+	CArchiveCommandLineOptions options;
+	OptionSetting( commandStrings, options );
+	options.OverwriteMode = NExtract::NOverwriteMode::kWithoutPrompt; // 덮어쓰기 할때 묻지마라.
+	//------------
+
+	// 압축파일 형식 인덱스 추출.
+	CIntVector formatIndices;
+	if (!codecs_->FindFormatForArchiveType(options.ArcType, formatIndices))
+	{
+		throw kUnsupportedArcTypeMessage;
+	}
+
+	bool isExtractGroupCommand = options.Command.IsFromExtractGroup();
+
+	if (codecs_->Formats.Size() == 0 &&
+		(isExtractGroupCommand ||
+		options.Command.CommandType == NCommandType::kList ||
+		options.Command.IsFromUpdateGroup()))
+		throw kNoFormats;
+
+	// 압축 해제
+	if (isExtractGroupCommand)
+	{
+		CExtractCallbackConsole *ecs = new CExtractCallbackConsole;
+		CMyComPtr<IFolderArchiveExtractCallback> extractCallback = ecs;
+
+		ecs->OutStream = &outStream_;
+
+#ifndef _NO_CRYPTO
+		ecs->PasswordIsDefined = options.PasswordEnabled;
+		ecs->Password = options.Password;
+#endif
+
+		ecs->Init();
+
+		COpenCallbackConsole openCallback;
+		openCallback.OutStream = &outStream_;
+
+#ifndef _NO_CRYPTO
+		openCallback.PasswordIsDefined = options.PasswordEnabled;
+		openCallback.Password = options.Password;
+#endif
+
+		CExtractOptions eo;
+		eo.StdInMode = options.StdInMode;
+		eo.StdOutMode = options.StdOutMode;
+		eo.PathMode = options.Command.GetPathMode();
+		eo.TestMode = options.Command.IsTestMode();
+		eo.OverwriteMode = options.OverwriteMode;
+		eo.OutputDir = options.OutputDir;
+		eo.YesToAll = options.YesToAll;
+		eo.CalcCrc = options.CalcCrc;
+
+#if !defined(_7ZIP_ST) && !defined(_SFX)
+		eo.Properties = options.ExtractProperties;
+#endif
+
+		UString errorMessage;
+		CDecompressStat stat;
+		HRESULT result = DecompressArchives(
+			codecs_,
+			formatIndices,
+			options.ArchivePathsSorted,
+			options.ArchivePathsFullSorted,
+			options.WildcardCensor.Pairs.Front().Head,
+			eo, &openCallback, ecs, errorMessage, stat);
+
+		/* 결과 출력
+		if (!errorMessage.IsEmpty())
+		{
+		stdStream_ << endl << "Error: " << errorMessage;
+		if (result == S_OK)
+		result = E_FAIL;
+		}
+
+		stdStream_ << endl;
+		if (ecs->NumArchives > 1)
+		stdStream_ << "Archives: " << ecs->NumArchives << endl;
+		if (ecs->NumArchiveErrors != 0 || ecs->NumFileErrors != 0)
+		{
+		if (ecs->NumArchives > 1)
+		{
+		stdStream_ << endl;
+		if (ecs->NumArchiveErrors != 0)
+		stdStream_ << "Archive Errors: " << ecs->NumArchiveErrors << endl;
+		if (ecs->NumFileErrors != 0)
+		stdStream_ << "Sub items Errors: " << ecs->NumFileErrors << endl;
+		}
+		if (result != S_OK)
+		throw CSystemException(result);
+		return NExitCode::kFatalError;
+		}
+		if (result != S_OK)
+		throw CSystemException(result);
+		if (stat.NumFolders != 0)
+		stdStream_ << "Folders: " << stat.NumFolders << endl;
+		if (stat.NumFiles != 1 || stat.NumFolders != 0)
+		stdStream_ << "Files: " << stat.NumFiles << endl;
+		stdStream_
+		<< "Size:       " << stat.UnpackSize << endl
+		<< "Compressed: " << stat.PackSize << endl;
+		if (options.CalcCrc)
+		{
+		wchar_t s[16];
+		ConvertUInt32ToHex(stat.CrcSum, s);
+		stdStream_ << "CRC: " << s << endl;
+		}
+		*/
+	}
+}
+
+void zmodifyer::add( UStringVector & file_names, wchar_t const * password )
+{
+	update( file_names, L"a", password );
+}
+
+void zmodifyer::del( UStringVector & file_names, wchar_t const * password )
+{
+	update( file_names, L"d", password );
+}
+
+// 커맨드라인 정보로 options 셋팅
+void zmodifyer::OptionSetting(UStringVector& commandStrings, CArchiveCommandLineOptions & options)
+{		
+	CArchiveCommandLineParser parser;
+
+	parser.Parse1(commandStrings, options);
+	
+	if (options.HelpMode)
+	{
+		//ShowCopyrightAndHelp(g_StdOut, true);
+		return;
+	}
+	parser.Parse2(options);
+
+	if( options.PasswordEnabled )
+	{
+		CMyComPtr< ICryptoSetPassword > setPassword = new CCryptoSetPassword;
+		setPassword->CryptoSetPassword( (const Byte*)(&options.Password[0]), options.Password.Length() * 2 );
+	}
+}
+
+void zmodifyer::update( UStringVector & file_names, wchar_t const * command, wchar_t const * password )
+{
+	if( file_names.IsEmpty() || !command )
+		return;
+
+	// 커맨드 스트링
+	UStringVector commandStrings;
+
+	// command == a 추가/업데이트, command == d 제거
+	commandStrings.Add( command );
+
+	// 압축 방식 lzma2
+	//commandStrings.Add( L"-m0=LZMA2" );
+	// 프로그래스 뷰 사용안함
+	commandStrings.Add( L"-bd" );
+	// 솔리드 압축 사용 안함
+	commandStrings.Add( L"-ms=off" );
+
+	if( password )
+	{	
+		UString pw( L"-p" );
+		commandStrings.Add( (pw + password) );
+	}
+	commandStrings.Add( file_name_ );
+
+	for( int i=0; i<file_names.Size(); ++i )
+		commandStrings.Add( file_names[i] );
+
+	// 파싱된 커맨드라인 정보로 options 셋팅 ------------
+	CArchiveCommandLineOptions options;
+	OptionSetting( commandStrings, options );
+	//------------
+
+	// 압축파일 형식 인덱스 추출.
+	CIntVector formatIndices;
+	if (!codecs_->FindFormatForArchiveType(options.ArcType, formatIndices))
+	{
+		throw kUnsupportedArcTypeMessage;
+	}
+
+	CUpdateOptions &uo = options.UpdateOptions;
+	if (uo.SfxMode && uo.SfxModule.IsEmpty())
+		uo.SfxModule = kDefaultSfxModule;
+
+	COpenCallbackConsole openCallback;
+	openCallback.OutStream = &outStream_;
+
+#ifndef _NO_CRYPTO
+	bool passwordIsDefined =
+		options.PasswordEnabled && !options.Password.IsEmpty();
+	openCallback.PasswordIsDefined = passwordIsDefined;
+	openCallback.Password = options.Password;
+#endif
+
+	CUpdateCallbackConsole callback;
+	callback.EnablePercents = options.EnablePercents;
+
+#ifndef _NO_CRYPTO
+	callback.PasswordIsDefined = passwordIsDefined;
+	callback.AskPassword = options.PasswordEnabled && options.Password.IsEmpty();
+	callback.Password = options.Password;
+#endif
+
+	callback.StdOutMode = uo.StdOutMode;
+	callback.Init(&stdStrema_);
+
+	CUpdateErrorInfo errorInfo;
+
+	if (!uo.Init(codecs_, formatIndices, options.ArchiveName))
+		throw kUnsupportedArcTypeMessage;
+	HRESULT result = UpdateArchive(codecs_,
+		options.WildcardCensor, uo,
+		errorInfo, &openCallback, &callback);
+
+	/*
+	int exitCode = NExitCode::kSuccess;
+	if (callback.CantFindFiles.Size() > 0)
+	{
+		stdStream_ << endl;
+		stdStream_ << "WARNINGS for files:" << endl << endl;
+		int numErrors = callback.CantFindFiles.Size();
+		for (int i = 0; i < numErrors; i++)
+		{
+			stdStream_ << callback.CantFindFiles[i] << " : ";
+			//stdStream_ << NError::MyFormatMessageW(callback.CantFindCodes[i]) << endl;
+		}
+		stdStream_ << "----------------" << endl;
+		stdStream_ << "WARNING: Cannot find " << numErrors << " file";
+		if (numErrors > 1)
+			stdStream_ << "s";
+		stdStream_ << endl;
+		exitCode = NExitCode::kWarning;
+	}
+	*/
+
+	/* 결과 정보 출력
+	if (result != S_OK)
+	{
+	UString message;
+	if (!errorInfo.Message.IsEmpty())
+	{
+	message += errorInfo.Message;
+	message += L"\n";
+	}
+	if (!errorInfo.FileName.IsEmpty())
+	{
+	message += errorInfo.FileName;
+	message += L"\n";
+	}
+	if (!errorInfo.FileName2.IsEmpty())
+	{
+	message += errorInfo.FileName2;
+	message += L"\n";
+	}
+	if (errorInfo.SystemError != 0)
+	{
+	message += NError::MyFormatMessageW(errorInfo.SystemError);
+	message += L"\n";
+	}
+	if (!message.IsEmpty())
+	stdStream << L"\nError:\n" << message;
+	throw CSystemException(result);
+	}
+
+	int numErrors = callback.FailedFiles.Size();
+	if (numErrors == 0)
+	{
+	if (callback.CantFindFiles.Size() == 0)
+	stdStream << kEverythingIsOk << endl;
+	}
+	else
+	{
+	stdStream << endl;
+	stdStream << "WARNINGS for files:" << endl << endl;
+	for (int i = 0; i < numErrors; i++)
+	{
+	stdStream << callback.FailedFiles[i] << " : ";
+	stdStream << NError::MyFormatMessageW(callback.FailedCodes[i]) << endl;
+	}
+	stdStream << "----------------" << endl;
+	stdStream << "WARNING: Cannot open " << numErrors << " file";
+	if (numErrors > 1)
+	stdStream << "s";
+	stdStream << endl;
+	exitCode = NExitCode::kWarning;
+	}
+	return;
+	*/
+}
+
+#undef kEverythingIsOk
+#undef kUserErrorMessage
+#undef kNoFormats
+#undef kUnsupportedArcTypeMessage
+#undef kDefaultSfxModule

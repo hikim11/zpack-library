@@ -1,0 +1,479 @@
+// LzmaEncoder.cpp
+
+#include "StdAfx.h"
+
+#include "../../../C/Alloc.h"
+
+#include "../Common/CWrappers.h"
+#include "../Common/StreamUtils.h"
+#include "../UI/Console/OpenCallbackConsole.h"
+
+#include "LzmaEncoder.h"
+
+#include <hash_map>
+#include <string>
+#include <algorithm>
+
+#include "parallel/for_each.hpp"
+
+//#include "cryptopp/cryptopp.h"
+//#pragma comment( lib, "cryptopp.lib" )
+
+namespace NCompress {
+namespace NLzma {
+
+static void *SzBigAlloc(void *, size_t size) { return BigAlloc(size); }
+static void SzBigFree(void *, void *address) { BigFree(address); }
+static ISzAlloc g_BigAlloc = { SzBigAlloc, SzBigFree };
+
+static void *SzAlloc(void *, size_t size) { return MyAlloc(size); }
+static void SzFree(void *, void *address) { MyFree(address); }
+static ISzAlloc g_Alloc = { SzAlloc, SzFree };
+
+CEncoder::CEncoder()
+{
+  _encoder = 0;
+  _encoder = LzmaEnc_Create(&g_Alloc);
+  if (_encoder == 0)
+    throw 1;
+}
+
+CEncoder::~CEncoder()
+{
+  if (_encoder != 0)
+    LzmaEnc_Destroy(_encoder, &g_Alloc, &g_BigAlloc);
+}
+
+inline wchar_t GetUpperChar(wchar_t c)
+{
+  if (c >= 'a' && c <= 'z')
+    c -= 0x20;
+  return c;
+}
+
+static int ParseMatchFinder(const wchar_t *s, int *btMode, int *numHashBytes)
+{
+  wchar_t c = GetUpperChar(*s++);
+  if (c == L'H')
+  {
+    if (GetUpperChar(*s++) != L'C')
+      return 0;
+    int numHashBytesLoc = (int)(*s++ - L'0');
+    if (numHashBytesLoc < 4 || numHashBytesLoc > 4)
+      return 0;
+    if (*s++ != 0)
+      return 0;
+    *btMode = 0;
+    *numHashBytes = numHashBytesLoc;
+    return 1;
+  }
+  if (c != L'B')
+    return 0;
+
+  if (GetUpperChar(*s++) != L'T')
+    return 0;
+  int numHashBytesLoc = (int)(*s++ - L'0');
+  if (numHashBytesLoc < 2 || numHashBytesLoc > 4)
+    return 0;
+  c = GetUpperChar(*s++);
+  if (c != L'\0')
+    return 0;
+  *btMode = 1;
+  *numHashBytes = numHashBytesLoc;
+  return 1;
+}
+
+HRESULT SetLzmaProp(PROPID propID, const PROPVARIANT &prop, CLzmaEncProps &ep)
+{
+  if (propID == NCoderPropID::kMatchFinder)
+  {
+    if (prop.vt != VT_BSTR)
+      return E_INVALIDARG;
+    return ParseMatchFinder(prop.bstrVal, &ep.btMode, &ep.numHashBytes) ? S_OK : E_INVALIDARG;
+  }
+  if (prop.vt != VT_UI4)
+    return E_INVALIDARG;
+  UInt32 v = prop.ulVal;
+  switch (propID)
+  {
+    case NCoderPropID::kNumFastBytes: ep.fb = v; break;
+    case NCoderPropID::kMatchFinderCycles: ep.mc = v; break;
+    case NCoderPropID::kAlgorithm: ep.algo = v; break;
+    case NCoderPropID::kDictionarySize: ep.dictSize = v; break;
+    case NCoderPropID::kPosStateBits: ep.pb = v; break;
+    case NCoderPropID::kLitPosBits: ep.lp = v; break;
+    case NCoderPropID::kLitContextBits: ep.lc = v; break;
+    default: return E_INVALIDARG;
+  }
+  return S_OK;
+}
+
+STDMETHODIMP CEncoder::SetCoderProperties(const PROPID *propIDs,
+    const PROPVARIANT *coderProps, UInt32 numProps)
+{
+  CLzmaEncProps props;
+  LzmaEncProps_Init(&props);
+
+  for (UInt32 i = 0; i < numProps; i++)
+  {
+    const PROPVARIANT &prop = coderProps[i];
+    PROPID propID = propIDs[i];
+    switch (propID)
+    {
+      case NCoderPropID::kEndMarker:
+        if (prop.vt != VT_BOOL) return E_INVALIDARG; props.writeEndMark = (prop.boolVal == VARIANT_TRUE); break;
+      case NCoderPropID::kNumThreads:
+        if (prop.vt != VT_UI4) return E_INVALIDARG; props.numThreads = prop.ulVal; break;
+      default:
+        RINOK(SetLzmaProp(propID, prop, props));
+    }
+  }
+  return SResToHRESULT(LzmaEnc_SetProps(_encoder, &props));
+}
+
+STDMETHODIMP CEncoder::WriteCoderProperties(ISequentialOutStream *outStream)
+{
+  Byte props[LZMA_PROPS_SIZE];
+  size_t size = LZMA_PROPS_SIZE;
+  RINOK(LzmaEnc_WriteProperties(_encoder, props, &size));
+  return WriteStream(outStream, props, size);
+}
+
+STDMETHODIMP CEncoder::Code(ISequentialInStream *inStream, ISequentialOutStream *outStream,
+    const UInt64 * /* inSize */, const UInt64 * /* outSize */, ICompressProgressInfo *progress)
+{
+  CSeqInStreamWrap inWrap(inStream);
+  CSeqOutStreamWrap outWrap(outStream);
+  //CCompressProgressWrap progressWrap(progress);
+
+  SRes res = LzmaEnc_Encode(_encoder, &outWrap.p, &inWrap.p, /*progress ? &progressWrap.p :*/ NULL, &g_Alloc, &g_BigAlloc);
+  if (res == SZ_ERROR_READ && inWrap.Res != S_OK)
+    return inWrap.Res;
+  if (res == SZ_ERROR_WRITE && outWrap.Res != S_OK)
+    return outWrap.Res;
+ // if (res == SZ_ERROR_PROGRESS && progressWrap.Res != S_OK)
+ //   return progressWrap.Res;
+  return SResToHRESULT(res);
+}
+  
+}
+
+namespace NAes
+{
+	/*
+	STDMETHODIMP CCoder::SetCoderProperties(const PROPID *propIDs,
+		const PROPVARIANT *coderProps, UInt32 numProps)
+	{
+		CLzmaEncProps props;
+		LzmaEncProps_Init(&props);
+
+		for (UInt32 i = 0; i < numProps; i++)
+		{
+			const PROPVARIANT &prop = coderProps[i];
+			PROPID propID = propIDs[i];
+			switch (propID)
+			{
+			case NCoderPropID::kEndMarker:
+				if (prop.vt != VT_BOOL) return E_INVALIDARG; props.writeEndMark = (prop.boolVal == VARIANT_TRUE); break;
+			case NCoderPropID::kNumThreads:
+				if (prop.vt != VT_UI4) return E_INVALIDARG; props.numThreads = prop.ulVal; break;
+			default:
+				RINOK(NLzma::SetLzmaProp(propID, prop, props));
+			}
+		}
+		return SResToHRESULT(LzmaEnc_SetProps(_encoder, &props));
+
+		//return S_OK;
+	}
+
+	STDMETHODIMP CCoder::WriteCoderProperties(ISequentialOutStream *outStream)
+	{
+		Byte props[LZMA_PROPS_SIZE];
+		size_t size = LZMA_PROPS_SIZE;
+		RINOK(LzmaEnc_WriteProperties(_encoder, props, &size));
+		return WriteStream(outStream, props, size);
+		//return S_OK;
+	}
+	*/
+
+	STDMETHODIMP CCoder::GetInStreamProcessedSize(UInt64 *value)
+	{
+		*value = 0;
+		return S_OK;
+	}
+
+	/*
+	typedef std::basic_string<OLECHAR, std::char_traits<OLECHAR>, std::allocator<OLECHAR> > PasswordStr;
+
+	static void make_password_key( PasswordStr password_str, Byte * key )
+	{
+		PasswordStr ps1 = password_str;
+
+		size_t key1 = stdext::hash_value(ps1);
+
+		size_t * k = (size_t*)(&key[0]);
+
+		if( ps1.length() < 2 )
+		{
+			for(int i=0; i<4; ++i)
+				k[i] = key1;
+
+			return;
+		}
+
+		std::sort( ps1.begin(), ps1.end() );
+
+		PasswordStr ps2 = password_str;
+
+		std::reverse( ps2.begin(), ps2.end() );
+
+		k[0] = stdext::hash_value( ps1 );
+		k[1] = stdext::hash_value( ps2 );
+		k[2] = k[0] ^ k[1];
+		k[3] = key1;
+	}
+	*/
+
+	inline void wstring2string(std::string &dest,const std::wstring &src)
+	{
+		dest.resize(src.size());
+
+		parallel::_for( 0, (int)src.size(), [&dest, &src](int i, bool & breakFlag)
+			{
+				dest[i] = src[i] < 256 ? src[i] : ' ';
+			}
+		, 8 );
+	}
+
+	STDMETHODIMP CCoder::Code(ISequentialInStream *inStream, ISequentialOutStream *outStream,
+		const UInt64 * inSize, const UInt64 * outSize, ICompressProgressInfo *progress)
+	{
+		CMyComPtr<ICryptoGetTextPassword> getPassword( new CCryptoGetTextPassword );
+
+		CMyComBSTR password;
+
+		getPassword->CryptoGetTextPassword( &password );
+
+// 		Byte key[16];
+// 
+// 		memset( &(key[0]), 0, sizeof(key) );
+// 
+// 		if( password.m_str )
+// 		{
+// 			make_password_key( password.m_str, key );
+// 		}
+// 
+// 		UInt32 processedSize = 0;
+// 
+// 		UInt32 complateSize = 0;
+// 
+// 		Byte buf[65535];
+// 
+// 		int keyIdx = 0;
+// 
+// 		do {
+// 
+// 			inStream->Read( buf, sizeof(buf), &processedSize );
+// 
+// 			if( processedSize )
+// 			{
+// 				for( UInt32 i=0; i<processedSize; ++i ) 
+// 				{
+// 					buf[i] ^= key[keyIdx++];
+// 
+// 					if( keyIdx == 16 )
+// 						keyIdx = 0;
+// 				}
+// 
+// 				RINOK(WriteStream( outStream, buf, processedSize ));
+// 			}		
+// 
+// 		} while ( processedSize > 0 );
+
+		static const int bufferSize = 1024*1024*4; // 4mb;
+		
+		UInt32 processedSize = 0;
+
+		size_t totalSize = 0;
+
+		std::string pw;
+
+
+		if( password.m_str )
+		{
+			std::wstring wpw = password.m_str;
+
+			wstring2string( pw, wpw );
+		}
+
+		//cryptopp crypto;
+
+		struct BufferElement
+		{
+			Byte * buf;
+			size_t size;
+
+			BufferElement(Byte* buf, size_t size) : buf(buf), size(size) {}
+		};
+
+		std::vector<BufferElement> readBuf;
+
+		//std::vector<unsigned char> cipher, encoded;
+		std::string cipher, encoded;
+
+		do {
+			Byte * buf = new Byte[bufferSize];
+
+			inStream->Read( buf, sizeof(buf)*bufferSize, &processedSize );
+
+			if( processedSize > 0 )
+			{
+				totalSize += processedSize;
+				readBuf.push_back( BufferElement( buf, processedSize ) );
+
+				if( !pw.empty() )
+				{
+					cipher.clear();
+					encoded.clear();
+					std::string bufStr = (char*)buf;
+					//crypto.encrypt( const_cast<char*>( pw.c_str() ), bufStr, cipher, encoded );
+					//crypto.decrypt( const_cast<char*>( pw.c_str() ), bufStr, encoded );
+				}				
+
+				if( !encoded.empty() )
+				{
+					RINOK(WriteStream( outStream, &encoded[0], encoded.size() ));
+				}
+				else
+				{
+					RINOK(WriteStream( outStream, buf, processedSize ));
+				}
+			}
+			else
+			{
+				delete[] buf;
+			}
+
+		} while ( processedSize > 0 );
+
+
+		Byte * totalBuf = new Byte[ totalSize ];
+
+		size_t curPos = 0;
+
+		for( size_t i=0; i<readBuf.size(); ++i )
+		{
+			BufferElement & buffer = readBuf[i];
+			memcpy_s( totalBuf+curPos, totalSize-curPos, buffer.buf, buffer.size );
+			curPos += buffer.size;
+		}
+
+		/*
+		if( !pw.empty() )
+		{
+			crypto.encrypt( const_cast<char*>( pw.c_str() ), totalBuf, totalSize, cipher, encoded );
+			//crypto.decrypt( const_cast<char*>( pw.c_str() ), totalBuf, totalSize, encoded );
+			crypto.decrypt( const_cast<char*>( pw.c_str() ), &encoded[0], encoded.size(), cipher );
+		}
+
+		if( !encoded.empty() )
+		{
+			RINOK(WriteStream( outStream, &encoded[0], encoded.size() ));
+		}
+		else
+		{
+			RINOK(WriteStream( outStream, totalBuf, totalSize ));
+		}
+		*/
+
+		delete[] totalBuf;
+
+		parallel::_for( 0, readBuf.size(), [&readBuf](int i, bool & breakFlag)
+			{
+				if( breakFlag )
+					return;
+				
+				delete[] readBuf[i].buf;
+			}
+			,12
+		);
+
+		return S_OK;
+	}
+
+	CCoder::CCoder()
+	{
+		/*
+		_encoder = 0;
+		_encoder = LzmaEnc_Create(&NLzma::g_Alloc);
+		if (_encoder == 0)
+			throw 1;
+			*/
+	}
+
+	CCoder::~CCoder()
+	{
+		/*
+		if (_encoder != 0)
+			LzmaEnc_Destroy(_encoder, &NLzma::g_Alloc, &NLzma::g_BigAlloc);
+			*/
+	}
+
+/*
+	static const UInt32 kBufferSize = 1 << 17;
+
+	CCoder::~CCoder()
+	{
+	  ::MidFree(_buffer);
+	}
+
+	STDMETHODIMP CCoder::Code(ISequentialInStream *inStream,
+		ISequentialOutStream *outStream,
+		const UInt64 * inSize, const UInt64 *outSize,
+		ICompressProgressInfo *progress)
+	{
+	  if (_buffer == 0)
+	  {
+		_buffer = (Byte *)::MidAlloc(kBufferSize);
+		if (_buffer == 0)
+		  return E_OUTOFMEMORY;
+	  }
+
+	  TotalSize = 0;
+	  for (;;)
+	  {
+		UInt32 size = kBufferSize;
+		if (outSize != 0)
+		  if (size > *outSize - TotalSize)
+			size = (UInt32)(*outSize - TotalSize);
+		RINOK(inStream->Read(_buffer, size, &size));
+		if (size == 0)
+		  break;
+		if (outStream)
+		{
+		  RINOK(WriteStream(outStream, _buffer, size));
+		}
+		TotalSize += size;
+		if (progress != NULL)
+		{
+		  RINOK(progress->SetRatioInfo(&TotalSize, &TotalSize));
+		}
+	  }
+	  return S_OK;
+	}
+
+	STDMETHODIMP CCoder::GetInStreamProcessedSize(UInt64 *value)
+	{
+	  *value = TotalSize;
+	  return S_OK;
+	}
+
+	HRESULT CryptoStream(ISequentialInStream *inStream, ISequentialOutStream *outStream, ICompressProgressInfo *progress)
+	{
+	  CMyComPtr<ICompressCoder> coder = new NAes::CCoder;
+	  return coder->Code(inStream, outStream, NULL, NULL, progress);
+	}
+	*/
+
+}
+}
