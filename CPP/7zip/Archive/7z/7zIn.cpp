@@ -1097,7 +1097,7 @@ void CArchiveDatabaseEx::FillFolderStartFileIndex(ZDB * zdb)
 
 	  if( file.Name.Length() > 0 )
 	  {
-		  zdb->insert( file.Name, i );
+		  zdb->insert( file.Name, i, &file );
 	  }
 
       continue;
@@ -1122,7 +1122,7 @@ void CArchiveDatabaseEx::FillFolderStartFileIndex(ZDB * zdb)
 
 	if( file.Name.Length() > 0 )
 	{
-		zdb->insert( file.Name, i );
+		zdb->insert( file.Name, i, &file );
 	}
 
     FileIndexToFolderIndexMap.Add(folderIndex);

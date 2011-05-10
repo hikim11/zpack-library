@@ -19,7 +19,8 @@ int _tmain(int argc, _TCHAR* argv[])
 	for( int i=0; i<1; ++i )
 	{
 		//wchar_t const * info = ZpackFolderInfo( L"console/222.7z", L"", L"" );
-		ZpackExtract( L"console/222.7z", L"doc/src", L"console", true, L"123" );
+		//ZpackExtract( L"console/222.7z", L"doc/src", L"console", true, L"123" );
+		std::wcout << ZpackFolderInfo( L"console/222.7z", 0, L"123" ) << std::endl;
 
 		/*
 		std::fstream fs("boost\\more\\BoostSponsorshipAgreemenT.pdf");

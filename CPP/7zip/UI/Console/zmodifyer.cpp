@@ -5,7 +5,7 @@
 #include <boost/algorithm/string.hpp>
 #include <list>
 
-#include "../../Archive/7z/7zDB.h"
+
 
 // ---------------------------
 // exception messages
@@ -71,7 +71,7 @@ zmodifyer::~zmodifyer() {
 		delete zdb_;
 }
 
-void zmodifyer::getInfo( std::vector< std::wstring > & fileList, wchar_t const * path, wchar_t const * password )
+void zmodifyer::getInfo( std::vector< std::pair< std::wstring, ZFile* > > & fileList, wchar_t const * path, wchar_t const * password )
 {
 	if( zdb_->db_.IsEmpty() )
 	{
