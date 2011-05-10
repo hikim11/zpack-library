@@ -1,11 +1,12 @@
 #include "7zDB.h"
+#include "7zItem.h"
 #include <boost/algorithm/string.hpp>
 #include "parallel/for_each.hpp"
 
 //---------------------------------------------------------
 //
 
-ZFile::ZFile(UString & name) : name_(name), index_(-1) {}
+ZFile::ZFile(UString & name) : name_(name), index_(-1), fileInfo_(0) {}
 
 //---------------------------------------------------------
 //
@@ -22,7 +23,7 @@ ZFile::~ZFile() {
 //---------------------------------------------------------
 //
 
-ZFile * ZFile::insert( UString const & filename, int index )
+ZFile * ZFile::insert( UString const & filename, int index, NArchive::N7z::CFileItem * fileInfo )
 {
 	if( filename.Length() == 0 )
 		return this;
@@ -33,13 +34,13 @@ ZFile * ZFile::insert( UString const & filename, int index )
 
 	boost::split( path, tmp, boost::is_any_of(L"/\\") );
 
-	return insert( path, index );
+	return insert( path, index, fileInfo );
 }
 
 //---------------------------------------------------------
 //
 
-ZFile * ZFile::insert( ZFile::FolderPath & path, int index )
+ZFile * ZFile::insert( ZFile::FolderPath & path, int index, NArchive::N7z::CFileItem * fileInfo )
 {
 	ZFile * file = 0;
 
@@ -55,7 +56,7 @@ ZFile * ZFile::insert( ZFile::FolderPath & path, int index )
 
 			path.pop_front();
 
-			file = file->insert( path, index );
+			file = file->insert( path, index, fileInfo );
 		}
 		else
 		{
@@ -65,13 +66,14 @@ ZFile * ZFile::insert( ZFile::FolderPath & path, int index )
 
 			path.pop_front();
 
-			file = file->insert( path, index );
+			file = file->insert( path, index, fileInfo );
 		}
 	}
 	else
 	{
 		index_ = index;
 		file = this;
+		fileInfo_ = fileInfo;
 	}
 
 	return file;
@@ -177,6 +179,34 @@ void ZFile::getList( std::vector< std::wstring > & fileList, std::wstring path, 
 	}
 }
 
+//--------------------------------------------------
+//
+
+void ZFile::getList( std::vector< std::pair< std::wstring, ZFile * > > & fileList, std::wstring path, bool isRoot )
+{
+	if( !path.empty() && path.back() != L'/' && path.back() != L'\\' )
+	{
+		path += L"/";
+	}
+
+	if( !isRoot )
+		path += name_;
+
+	if( elements_.empty() )
+	{
+		fileList.push_back( std::make_pair( path, this ) );
+	}
+	else
+	{
+		std::for_each( elements_.begin(), elements_.end(),
+			[ &fileList, &path ]( Elements::value_type & elem )
+		{
+			elem.second->getList( fileList, path, false );
+		}
+		);
+	}
+}
+
 //---------------------------------------------------------
 //
 
@@ -188,12 +218,12 @@ ZDB::ZDB( UString archiveName )
 //---------------------------------------------------------
 //
 
-void ZDB::insert( UString & filename, int index )
+void ZDB::insert( UString & filename, int index, NArchive::N7z::CFileItem * fileInfo )
 {
 	if( filename.Length() == 0 )
 		return;
 
-	folder_.insert( filename, index );
+	folder_.insert( filename, index, fileInfo );
 }
 
 //---------------------------------------------------------

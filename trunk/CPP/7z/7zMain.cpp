@@ -390,7 +390,9 @@ extern "C" LIBSPEC wchar_t const * ZpackFolderInfo( wchar_t const * pack_file, w
 
 	if( pack_file )
 	{
-		std::vector< std::wstring > infos;
+		typedef std::pair< std::wstring, ZFile* > FileInfo;
+
+		std::vector< FileInfo > infos;
 		
 		zpack * pack = zpackmanager.get( pack_file );
 
@@ -402,9 +404,21 @@ extern "C" LIBSPEC wchar_t const * ZpackFolderInfo( wchar_t const * pack_file, w
 		for(size_t i=0; i<infos.size(); ++i)
 		{
 			if( i != 0 )
-				result += L":";
+				result += L"\n";
 
-			result += infos[i];
+			FileInfo & fileinfo = infos[i];
+
+			ZFile * zfile = fileinfo.second;
+
+			result += fileinfo.first;
+
+			if( zfile && zfile->fileInfo_ )
+			{
+				std::wstringstream stream;
+				stream << L"\tisDir-" << (zfile->fileInfo_->IsDir ? 1 : 0) << L"\tsize-" << zfile->fileInfo_->Size << L"\tcrc-" << zfile->fileInfo_->Crc << L"\tattrId-" << zfile->fileInfo_->Attrib;
+
+				result += stream.str();
+			}
 		}
 	}
 

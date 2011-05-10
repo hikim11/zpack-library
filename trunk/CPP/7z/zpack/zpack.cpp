@@ -370,7 +370,7 @@ void zpack::folderInfo( std::vector< std::wstring > & fileList, std::wstring fol
 //////////////////////////////////////////////////////////////////////////////
 //
 
-void zpack::folderInfo( std::vector< std::wstring > & fileList, wchar_t const * path, wchar_t const * password )
+void zpack::folderInfo( std::vector< std::pair< std::wstring, ZFile* > > & fileList, wchar_t const * path, wchar_t const * password )
 {
 	locker l(ct_);
 

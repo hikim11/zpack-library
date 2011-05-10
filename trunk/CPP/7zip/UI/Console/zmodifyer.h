@@ -36,6 +36,8 @@
 
 #include "../../MyVersion.h"
 
+#include "../../Archive/7z/7zDB.h"
+
 #include <string>
 
 class ZDB;
@@ -64,7 +66,7 @@ public:
 	unsigned char * get( UString & file_name, size_t& size, wchar_t const * password = 0 );
 
 	// 폴더 정보 읽기
-	void getInfo( std::vector< std::wstring > & fileList, wchar_t const * path, wchar_t const * password = 0 );
+	void getInfo( std::vector< std::pair< std::wstring, ZFile* > > & fileList, wchar_t const * path, wchar_t const * password = 0 );
 
 	void clearDB();
 

@@ -10,7 +10,7 @@
 #include <unordered_map>
 #include <cassert>
 
-#include "zfile.h"
+//#include "zfile.h"
 
 #ifdef _DEBUG
 #pragma comment(lib, "aloneD.lib")
@@ -129,7 +129,7 @@ public:
 	bool del( std::wstring file_name, PasswordStr password = PasswordStr() );
 
 	// 해당 폴더의 정보를 조사
-	void folderInfo( std::vector< std::wstring > & fileList, wchar_t const * path, wchar_t const * password );
+	void folderInfo( std::vector< std::pair< std::wstring, ZFile* > > & fileList, wchar_t const * path, wchar_t const * password );
 
 	// 메모리 할당자 설정
 	void setAlloc( void*(*a)(void*, size_t size), void(*f)(void*, void*) ) { allocImp.Alloc = a; allocImp.Free = f; }
