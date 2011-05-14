@@ -533,7 +533,7 @@ bool zmodifyer::compress( unsigned char const * src, size_t srcLen, unsigned cha
 		NULL, &alloctator, &alloctator);
 
 	*(dest+5) = (unsigned char)outPropsSize;
-	*(unsigned int*)(dest+6) = destLen;
+	*(unsigned int*)(dest+6) = srcLen;
 	destLen += 10;
 
 	return (result == SZ_OK) ? true : false;
