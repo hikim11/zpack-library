@@ -514,7 +514,7 @@ static ISzAlloc alloctator = { ZAlloc, ZFree };
 
 bool zmodifyer::compress( unsigned char const * src, size_t srcLen, unsigned char * dest, size_t & destLen, int level /* = 5 */ )
 {
-	if( !src || !dest || destLen < 7 )
+	if( !src || !dest || destLen < 10 )
 		return false;
 
 	CLzmaEncProps props;
@@ -529,25 +529,29 @@ bool zmodifyer::compress( unsigned char const * src, size_t srcLen, unsigned cha
 
 	size_t outPropsSize = 5;
 
-	int result = LzmaEncode(dest+6, &destLen, src, srcLen, &props, dest, &outPropsSize, 0,
+	int result = LzmaEncode(dest+10, &destLen, src, srcLen, &props, dest, &outPropsSize, 0,
 		NULL, &alloctator, &alloctator);
 
 	*(dest+5) = (unsigned char)outPropsSize;
-	destLen += 6;
+	*(unsigned int*)(dest+6) = destLen;
+	destLen += 10;
 
 	return (result == SZ_OK) ? true : false;
 }
 
-bool zmodifyer::uncompress(unsigned char *dest, size_t  *destLen, const unsigned char *src, size_t srcLen)
+bool zmodifyer::uncompress( unsigned char * dest, unsigned int & destLen, const unsigned char *src, size_t srcLen)
 {
-	if( !src || srcLen < 6 || !dest || *destLen < 1 )
+	if( !src || srcLen < 10 || !dest )
 		return false;
 
-	unsigned sizeProp = *(src+5);
-	srcLen -= 6;
+	if( destLen < *(unsigned int*)(src+6) )
+		return false;
+
+	unsigned char sizeProp = *(src+5);
+	srcLen -= 10;
 
 	ELzmaStatus status;
-	int result = LzmaDecode(dest, destLen, (src+6), &srcLen, src, sizeProp, LZMA_FINISH_ANY, &status, &alloctator);
+	int result = LzmaDecode(dest, &destLen, (src+10), &srcLen, src, sizeProp, LZMA_FINISH_ANY, &status, &alloctator);
 
 	return (result == SZ_OK || result == SZ_ERROR_INPUT_EOF) ? true : false;
 }
