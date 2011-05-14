@@ -98,7 +98,7 @@
       <AdditionalDependencies>odbc32.lib;odbccp32.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
     <Lib>
-      <OutputFile>.\lib\$(TargetName)$(TargetExt)</OutputFile>
+      <OutputFile>$(TargetPath)</OutputFile>
       <LinkTimeCodeGeneration>true</LinkTimeCodeGeneration>
       <AdditionalLibraryDirectories>..\..\..\7z\cryptopp\lib\;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <TargetMachine>MachineX86</TargetMachine>

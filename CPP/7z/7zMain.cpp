@@ -50,14 +50,14 @@ int MY_CDECL main(int numargs, char *args[])
 		}
 		else if( command == "l" )
 		{
-			std::vector< std::wstring > fileList;
+			std::vector< std::pair<std::wstring, ZFile*> > fileList;
 
 			pack.folderInfo( fileList, (numargs > 3) ? lexical_cast<std::wstring>( args[idx] ).c_str() : L"", password.empty() ? 0 : password.c_str() );
 
 			std::for_each( fileList.begin(), fileList.end(),
-				[](std::wstring & file)
+				[](std::pair<std::wstring, ZFile*> & file)
 				{
-					std::wcout << file << std::endl;
+					std::wcout << file.first << std::endl;
 				}
 			);
 
