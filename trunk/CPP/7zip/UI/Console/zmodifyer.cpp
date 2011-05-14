@@ -4,6 +4,8 @@
 #include <sstream>
 #include <boost/algorithm/string.hpp>
 #include <list>
+#include "../../../C/LzmaEnc.h"
+#include "../../../C/LzmaDec.h"
 
 
 
@@ -504,6 +506,50 @@ void zmodifyer::clearDB()
 		delete zdb_;
 		zdb_ = new ZDB( file_name_.GetBuffer(0) );
 	}
+}
+
+static void *ZAlloc(void *, size_t size) { return size ? malloc(size) : 0; }
+static void ZFree(void *, void *address) { if( address ) free(address); }
+static ISzAlloc alloctator = { ZAlloc, ZFree };
+
+bool zmodifyer::compress( unsigned char const * src, size_t srcLen, unsigned char * dest, size_t & destLen, int level /* = 5 */ )
+{
+	if( !src || !dest || destLen < 7 )
+		return false;
+
+	CLzmaEncProps props;
+	LzmaEncProps_Init(&props);
+	props.level = level;
+	props.dictSize = 1 << 24;
+	props.lc = 3;
+	props.lp = 0;
+	props.pb = 2;
+	props.fb = 32;
+	props.numThreads = 2;
+
+	size_t outPropsSize = 5;
+
+	int result = LzmaEncode(dest+6, &destLen, src, srcLen, &props, dest, &outPropsSize, 0,
+		NULL, &alloctator, &alloctator);
+
+	*(dest+5) = (unsigned char)outPropsSize;
+	destLen += 6;
+
+	return (result == SZ_OK) ? true : false;
+}
+
+bool zmodifyer::uncompress(unsigned char *dest, size_t  *destLen, const unsigned char *src, size_t srcLen)
+{
+	if( !src || srcLen < 6 || !dest || *destLen < 1 )
+		return false;
+
+	unsigned sizeProp = *(src+5);
+	srcLen -= 6;
+
+	ELzmaStatus status;
+	int result = LzmaDecode(dest, destLen, (src+6), &srcLen, src, sizeProp, LZMA_FINISH_ANY, &status, &alloctator);
+
+	return (result == SZ_OK || result == SZ_ERROR_INPUT_EOF) ? true : false;
 }
 
 #undef kEverythingIsOk

@@ -10,6 +10,9 @@
     <Filter Include="parallel">
       <UniqueIdentifier>{06b044f4-954c-42c7-be37-8eb7798bae7b}</UniqueIdentifier>
     </Filter>
+    <Filter Include="c7zip">
+      <UniqueIdentifier>{4f7329b2-c166-4a40-b7d9-43b654523a30}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="zpack\zpack.cpp">

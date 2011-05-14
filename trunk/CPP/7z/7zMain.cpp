@@ -452,6 +452,17 @@ extern "C" LIBSPEC void ZpackClearCache( wchar_t const * pack_file )
 	}
 }
 
+
+extern "C" LIBSPEC bool CompressLZMA( unsigned char const * src, unsigned int srcLen, unsigned char * dest, unsigned int &destLen, int level )
+{
+	return zmodifyer::compress( src, srcLen, dest, destLen, level );
+}
+
+extern "C" LIBSPEC bool UnCompressLZMA( unsigned char const * src, unsigned int srcLen, unsigned char * dest, unsigned int &destLen )
+{
+	return zmodifyer::uncompress( dest, &destLen, src, srcLen );
+}
+
 BOOL WINAPI DllMain(HINSTANCE hInst, DWORD fdwReason, LPVOID lpRes)
 {
 
@@ -504,4 +515,5 @@ BOOL WINAPI DllMain(HINSTANCE hInst, DWORD fdwReason, LPVOID lpRes)
 
 	return TRUE;
 }
+
 #endif

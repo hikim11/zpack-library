@@ -620,4 +620,5 @@ FolderTree * FolderTree::get( std::vector< std::wstring > & path, FileMap & file
 	return tree;
 }
 */
+
 //////////////////////////////////////////////////////////////////////////////

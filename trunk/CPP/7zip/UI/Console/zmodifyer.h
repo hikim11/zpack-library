@@ -70,6 +70,9 @@ public:
 
 	void clearDB();
 
+	static bool compress( unsigned char const * src, size_t srcLen, unsigned char * dest, size_t & destLen, int level = 5 );
+	static bool uncompress(unsigned char *dest, size_t  *destLen, const unsigned char *src, size_t  srcLen);
+
 private:
 	CCodecs *codecs_; // 압축 코덱
 	UString file_name_; // 압축 파일 이름
