@@ -10,19 +10,34 @@
 
 int _tmain(int argc, _TCHAR* argv[])
 {
-	size_t size;
-
 	int start = GetTickCount();
+
+	unsigned char buf[1024] = {0,};
+	size_t destSize = sizeof(buf);
+
+	std::string testData = "동해물과 백두산이 마르고 닳도록 하느님이 보우하사 우리나라 만세 무궁화 삼천리 화려강산 대한사람 대한으로 길이 보전하세 남산위에 저 소나무 철갑을 두른듯 바람서리 불변함은 우리 기상일세 무궁화 삼천리 화려강산 대한사람 대한으로 길이 보전하세";
+
+	std::cout << testData.length() << std::endl;
+
+	CompressLZMA( (unsigned char const *)testData.c_str(), testData.size(), buf, destSize );
+
+	std::cout << destSize << std::endl;
+
+	unsigned char buf2[1024] = {0,};
+	size_t destSize2 = sizeof(buf2);
+
+	UnCompressLZMA( buf, destSize, buf2, destSize2 );
+
+	std::cout << buf2 << std::endl;
 
 	//std::string str;
 
+	/*
 	for( int i=0; i<1; ++i )
 	{
-		//wchar_t const * info = ZpackFolderInfo( L"console/222.7z", L"", L"" );
-		//ZpackExtract( L"console/222.7z", L"doc/src", L"console", true, L"123" );
+		ZpackExtract( L"console/222.7z", L"doc/src", L"console", true, L"123" );
 		std::wcout << ZpackFolderInfo( L"console/222.7z", 0, L"123" ) << std::endl;
 
-		/*
 		std::fstream fs("boost\\more\\BoostSponsorshipAgreemenT.pdf");
 
 		str.clear();
@@ -34,8 +49,10 @@ int _tmain(int argc, _TCHAR* argv[])
 			fs.get( buf, sizeof(buf) );
 			str += buf;
 		}
-		*/
 	}
+	*/
+
+
 
 	std::cout << (GetTickCount() - start) * 0.001f << std::endl;
 
