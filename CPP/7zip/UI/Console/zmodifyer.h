@@ -71,7 +71,7 @@ public:
 	void clearDB();
 
 	static bool compress( unsigned char const * src, size_t srcLen, unsigned char * dest, size_t & destLen, int level = 5 );
-	static bool uncompress(unsigned char *dest, size_t  *destLen, const unsigned char *src, size_t  srcLen);
+	static bool uncompress(unsigned char *dest, size_t & destLen, const unsigned char *src, size_t  srcLen);
 
 private:
 	CCodecs *codecs_; // ¾ÐÃà ÄÚµ¦

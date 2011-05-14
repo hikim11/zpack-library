@@ -354,6 +354,7 @@ extern "C" LIBSPEC void ZpackRelease( wchar_t const * pack_file, wchar_t const *
 	}
 }
 
+/*
 extern "C" LIBSPEC void ZpackSetAllocor( wchar_t const * pack_file, void*(*allocFunc)(void*,size_t), void(*freeFunc)(void*,void*) )
 {
 	if( pack_file && allocFunc && freeFunc )
@@ -379,6 +380,7 @@ extern "C" LIBSPEC void ZpackSetTmpAllocor( wchar_t const * pack_file, void*(*al
 		}
 	}
 }
+*/
 
 extern "C" LIBSPEC wchar_t const * ZpackFolderInfo( wchar_t const * pack_file, wchar_t const * path, wchar_t const * password )
 {
@@ -460,7 +462,7 @@ extern "C" LIBSPEC bool CompressLZMA( unsigned char const * src, unsigned int sr
 
 extern "C" LIBSPEC bool UnCompressLZMA( unsigned char const * src, unsigned int srcLen, unsigned char * dest, unsigned int &destLen )
 {
-	return zmodifyer::uncompress( dest, &destLen, src, srcLen );
+	return zmodifyer::uncompress( dest, destLen, src, srcLen );
 }
 
 BOOL WINAPI DllMain(HINSTANCE hInst, DWORD fdwReason, LPVOID lpRes)
