@@ -78,6 +78,7 @@
       <BufferSecurityCheck>true</BufferSecurityCheck>
       <RuntimeTypeInfo>false</RuntimeTypeInfo>
       <EnableFiberSafeOptimizations>true</EnableFiberSafeOptimizations>
+      <OpenMPSupport>false</OpenMPSupport>
     </ClCompile>
     <Midl>
       <TypeLibraryName>.\Release\Alone.tlb</TypeLibraryName>
