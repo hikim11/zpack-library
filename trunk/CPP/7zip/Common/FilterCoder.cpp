@@ -184,7 +184,7 @@ STDMETHODIMP CFilterCoder::Read(void *data, UInt32 size, UInt32 *processedSize)
       break;
     }
     UInt32 i;
-    for (i = 0; _convertedPosEnd + i < _bufferPos; i++)
+    for (i = 0; _convertedPosEnd + i < _bufferPos; ++i)
       _buffer[i] = _buffer[_convertedPosEnd + i];
     _bufferPos = i;
     _convertedPosBegin = _convertedPosEnd = 0;
