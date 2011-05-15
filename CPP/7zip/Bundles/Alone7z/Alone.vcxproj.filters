@@ -956,9 +956,6 @@
     <ClCompile Include="..\..\..\..\C\Delta.c">
       <Filter>C</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\..\..\C\LzFind.c">
-      <Filter>C</Filter>
-    </ClCompile>
     <ClCompile Include="..\..\..\..\C\LzFindMt.c">
       <Filter>C</Filter>
     </ClCompile>
@@ -1006,6 +1003,9 @@
     </ClCompile>
     <ClCompile Include="..\..\Archive\7z\7zDB.cpp">
       <Filter>Archive\7z</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\..\C\LzFind.cpp">
+      <Filter>C</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

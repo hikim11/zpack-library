@@ -520,11 +520,34 @@ bool zmodifyer::compress( unsigned char const * src, size_t srcLen, unsigned cha
 	CLzmaEncProps props;
 	LzmaEncProps_Init(&props);
 	props.level = level;
-	props.dictSize = 1 << 24;
+	props.algo = 0;
 	props.lc = 3;
 	props.lp = 0;
 	props.pb = 2;
-	props.fb = 32;
+
+	static const unsigned int kb = 1024;
+
+	if( srcLen > 1024 * 1024 * kb )
+	{
+		props.dictSize = 16 * 1024 * kb;
+		props.fb = 32;
+	}
+	else if( srcLen > 1024 * kb )
+	{
+		props.dictSize = 4 * 1024 * kb;
+		props.fb = 16;
+	}
+	else if( srcLen > kb )
+	{
+		props.dictSize = 64 * kb;
+		props.fb = 8;
+	}
+	else
+	{
+		props.dictSize = 64 * kb;
+		props.fb = 8;
+	}	
+	
 	props.numThreads = 2;
 
 	size_t outPropsSize = 5;

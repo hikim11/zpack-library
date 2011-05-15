@@ -3,6 +3,7 @@
 
 #include <string.h>
 
+
 #include "LzFind.h"
 #include "LzHash.h"
 
@@ -270,9 +271,11 @@ static void MatchFinder_SetLimits(CMatchFinder *p)
 
 void MatchFinder_Init(CMatchFinder *p)
 {
-  UInt32 i;
-  for (i = 0; i < p->hashSizeSum; i++)
-    p->hash[i] = kEmptyHashValue;
+//  	UInt32 i;
+//  	for (i = 0; i < p->hashSizeSum; i++)
+//  		p->hash[i] = kEmptyHashValue;
+  memset( p->hash, kEmptyHashValue, sizeof(*p->hash) * p->hashSizeSum );
+
   p->cyclicBufferPos = 0;
   p->buffer = p->bufferBase;
   p->pos = p->streamPos = p->cyclicBufferSize;
