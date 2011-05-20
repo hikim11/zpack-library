@@ -374,7 +374,14 @@ void zpack::folderInfo( std::vector< std::pair< std::wstring, ZFile* > > & fileL
 {
 	locker l(ct_);
 
-	modifyer_.getInfo( fileList, path, password );
+	try
+	{
+		modifyer_.getInfo( fileList, path, password );
+	}
+	catch(...)
+	{
+		fileList.clear();
+	}
 }
 
 //////////////////////////////////////////////////////////////////////////////
