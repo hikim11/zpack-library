@@ -362,8 +362,7 @@ void zmodifyer::add( UStringVector & file_names, int level, wchar_t const * pass
 	// 커맨드 스트링
 	UStringVector commandStrings;
 
-	//commandStrings.Add( L"U" );
-	commandStrings.Add( L"a" );
+	commandStrings.Add( L"U" );
 
 	std::wstring compressLevel;
 
