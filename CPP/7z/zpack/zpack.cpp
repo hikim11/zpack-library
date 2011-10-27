@@ -176,6 +176,7 @@ static void convertFilename( std::wstring & filename )
 	int length = (int)filename.size();
 
 	// 소문자로
+	/*
 	parallel::_for( 0, length, [&filename]( int i, bool & breakFlag )
 		{
 			if( breakFlag )
@@ -194,6 +195,15 @@ static void convertFilename( std::wstring & filename )
 		}
 		, 4
 	);
+	*/
+
+	wchar_t * c = (wchar_t*)filename.c_str();
+
+	for( int i=0; i<length; ++i )
+	{
+		if( c[i] == L'\\' )
+			c[i] = L'/';
+	}
 }
 
 //////////////////////////////////////////////////////////////////////////////
@@ -440,6 +450,7 @@ void zpack::parse_file_names( std::vector< std::wstring > & names, std::wstring 
 
 	int max_i = (int)names.size();
 
+	/*
 	parallel::_for( 0, max_i, [&names]( int i, bool & breakFlag )
 		{
 			if( breakFlag )
@@ -453,6 +464,16 @@ void zpack::parse_file_names( std::vector< std::wstring > & names, std::wstring 
 		}
 		, 4
 	);
+	*/
+
+	for( int i=0; i<max_i; ++i )
+	{
+		std::wstring & name = names[i];
+
+		TrimLeft(name);
+		TrimRight(name);
+		convertFilename(name);
+	}
 }
 
 //////////////////////////////////////////////////////////////////////////////
