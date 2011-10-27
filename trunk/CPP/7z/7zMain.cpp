@@ -210,6 +210,7 @@ namespace zpack_util
 			zpack * pack = 0;
 
 			// 소문자로
+			/*
 			parallel::_for( 0, (int)pack_name.length(),
 				[&pack_name](int i, bool & breakFlag)
 				{
@@ -222,6 +223,9 @@ namespace zpack_util
 				}
 				, pack_name.length() < 10 ? 2 : 4
 			);
+			*/
+
+			std::transform( pack_name.begin(), pack_name.end(), pack_name.begin(), towlower );
 
 			zpacks::iterator iter = zpacks_.find( pack_name );
 
