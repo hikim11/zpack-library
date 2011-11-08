@@ -55,6 +55,7 @@ NUserAnswerMode::EEnum ScanUserYesNoAllQuit(CStdOutStream *outStream)
 UString GetPassword(CStdOutStream *outStream)
 {
   //(*outStream) << "\nEnter password:";
-  outStream->Flush();
-  return g_StdIn.ScanUStringUntilNewLine();
+  //outStream->Flush();
+  //return g_StdIn.ScanUStringUntilNewLine();
+	return L"";
 }
