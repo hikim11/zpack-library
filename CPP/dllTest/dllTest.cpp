@@ -68,7 +68,7 @@ int _tmain(int argc, _TCHAR* argv[])
 	std::wcout << s << std::endl;
 	*/
 
-	ZpackAdd( L"test.cpp.7z", L"test2.cpp", 5, L"123" );
+	ZpackAdd( L"ÇÑ±Û.7z", L"test2.cpp", 5, L"123" );
 
 	return 0;
 }

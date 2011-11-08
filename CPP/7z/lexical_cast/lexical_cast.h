@@ -185,8 +185,9 @@ inline std::string lexical_cast( wchar_t const * t )
 		setlocale(LC_ALL, "korean");
 
 		size_t len = wcslen(t) + 1;
-		char * buf = new char[ len ];
-		wcstombs_s( 0, buf, len, t, len );
+		char * buf = new char[ len *2 ];
+		memset( buf, 0, len * 2 );
+		wcstombs_s( 0, buf, len*2, t, len );
 
 		r = buf;
 		delete[] buf;
