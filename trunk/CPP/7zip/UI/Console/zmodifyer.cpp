@@ -436,9 +436,11 @@ bool zmodifyer::update( UStringVector & file_names, UStringVector & commandStrin
 	// multi thread
 	commandStrings.Add( L"-MMT=+" );
 
-	UString pw( L"-P" );
-
-	commandStrings.Add( (pw + ( password ? password : L"") ) );
+	if( password && wcslen(password) )
+	{
+		UString pw( L"-P" );
+		commandStrings.Add( (pw + ( password ? password : L"") ) );
+	}
 
 	commandStrings.Add( file_name_ );
 
