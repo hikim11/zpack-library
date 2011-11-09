@@ -277,8 +277,15 @@ void zmodifyer::extract(UStringVector & file_names, wchar_t const * password, wc
 	}
 	commandStrings.Add( file_name_ );
 
-	for( int i=0; i<file_names.Size(); ++i )
-		commandStrings.Add( file_names[i] );
+	if( file_names.IsEmpty() )
+	{
+		commandStrings.Add( L"*" );
+	}
+	else
+	{
+		for( int i=0; i<file_names.Size(); ++i )
+			commandStrings.Add( file_names[i] );
+	}
 
 	// 파싱된 커맨드라인 정보로 options 셋팅 ------------
 	CArchiveCommandLineOptions options;

@@ -435,8 +435,11 @@ void zpack::parse_file_names( UStringVector & names, std::wstring const & file_n
 	std::for_each( ns.begin(), ns.end(),
 		[&names](std::wstring & n)
 		{
-			UString name = n.c_str();
-			names.Add( name );
+			if( !n.empty() )
+			{
+				UString name = n.c_str();
+				names.Add( name );
+			}
 		}
 	);
 }
