@@ -422,6 +422,8 @@ STDMETHODIMP CStdOutFileStream::Write(const void *data, UInt32 size, UInt32 *pro
 }
 #endif
 
+#include "static_pool/static_pool.h"
+
 //---------------------------------------------------------
 //
 
@@ -454,8 +456,8 @@ Byte * CIOStream::Read(size_t & size)
 
 	if( !buffers_.empty() )
 	{
-		data = buffers_[0].buf;
-		size = buffers_[0].size;
+		data = buffers_.front().buf;
+		size = buffers_.front().size;
 
 		buffers_.clear();
 	}
@@ -470,7 +472,8 @@ Byte * CIOStream::Read(size_t & size)
 
 STDMETHODIMP CIOStream::Write(const void *data, UInt32 size, UInt32 *processedSize)
 {
-	Byte * buf = new Byte[size+1];
+	//Byte * buf = new Byte[size+1];
+	Byte * buf = (Byte*)umtl::memory_manager::get().alloc(size+1);
 
 	memcpy_s( buf, size, data, size );
 
@@ -492,13 +495,14 @@ void CIOStream::Enumerate()
 {
 	if( buffers_.size() > 1 )
 	{
-		Byte * buf = new Byte[ totalSize_ + 1 ];
+		//Byte * buf = new Byte[ totalSize_ + 1 ];
+		Byte * buf = (Byte*)umtl::memory_manager::get().alloc( totalSize_ + 1 );
 
 		size_t copiedSize = 0;
 
-		for( size_t i=0; i<buffers_.size(); ++i )
+		for( Buffers::iterator i=buffers_.begin(); i!=buffers_.end(); ++i )
 		{
-			Buffer & buffer = buffers_[i];
+			Buffer & buffer = *i;
 
 			memcpy_s( buf+copiedSize, totalSize_-copiedSize, buffer.buf, buffer.size );
 
@@ -540,7 +544,8 @@ void CIOStream::Clear()
 		std::for_each( buffers_.begin(), buffers_.end(),
 			[]( Buffer & buffer )
 			{
-				delete [] buffer.buf;
+				//delete [] buffer.buf;
+				umtl::memory_manager::get().free( buffer.buf );
 			}
 		);
 

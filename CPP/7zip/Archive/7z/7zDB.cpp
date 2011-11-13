@@ -120,6 +120,24 @@ ZFile * ZFile::find( std::wstring const & filename )
 //---------------------------------------------------------
 //
 
+ZFile * ZFile::find( umtl::static_pool::wstring const & filename )
+{
+	if( filename.empty() )
+		return 0;
+
+	FolderPath path;
+
+	boost::split( path, filename, boost::is_any_of(L"/\\") );
+
+	if( path.back().empty() )
+		path.pop_back();
+
+	return find( path );
+}
+
+//---------------------------------------------------------
+//
+
 ZFile * ZFile::find( ZFile::FolderPath & path )
 {
 	ZFile * file = 0;

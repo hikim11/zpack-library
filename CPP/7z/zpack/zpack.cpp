@@ -278,7 +278,7 @@ Byte* zpack::find( std::wstring filename, size_t & offset, size_t & outSizeProce
 //////////////////////////////////////////////////////////////////////////////
 //
 
-Byte * zpack::get( std::wstring file_name, size_t & size, PasswordStr password )
+Byte * zpack::get( UString file_name, size_t & size, PasswordStr password )
 {
 	locker l(ct_);
 
@@ -291,9 +291,8 @@ Byte * zpack::get( std::wstring file_name, size_t & size, PasswordStr password )
 	try
 	{
 		//convertFilename( file_name );
-
-		UString name(file_name.c_str());
-		p = modifyer_.get( name, size, password.empty() ? 0 : password.c_str());
+		//UString name(file_name.c_str());
+		p = modifyer_.get( file_name, size, password.empty() ? 0 : password.c_str());
 	}
 	catch (...)
 	{

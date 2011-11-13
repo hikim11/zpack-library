@@ -142,6 +142,7 @@ public:
 };
 
 #include <vector>
+#include <list>
 
 class CIOStream
 	: public ISequentialOutStream	
@@ -166,7 +167,7 @@ public:
 	static void Enumerate();
 	static void Clear();
 
-	typedef std::vector< Buffer > Buffers;
+	typedef std::list< Buffer > Buffers;
 
 	static Buffers buffers_;
 	static size_t totalSize_;

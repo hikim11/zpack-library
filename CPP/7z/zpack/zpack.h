@@ -111,7 +111,7 @@ public:
 	//	PasswordStr password = PasswordStr(), Byte * outBuffer = 0, size_t outBufferSize = 0, UInt32 blockIndex = 0xFFFFFFFF );
 	// 리턴된 메모리는 반드시 릴리즈 해줘야 합니다.
 
-	Byte * get( std::wstring file_name, size_t & size, PasswordStr password = PasswordStr() );
+	Byte * get( UString file_name, size_t & size, PasswordStr password = PasswordStr() );
 
 	// extract 로 리턴된 메모리 릴리즈
 	void release( Byte * p );
