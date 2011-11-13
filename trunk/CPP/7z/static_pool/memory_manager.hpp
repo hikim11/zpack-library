@@ -4,11 +4,17 @@
 
 namespace umtl
 {
+	//-----------------------------------------------------------------------
+	//
+
 	inline memory_manager & memory_manager::get()
 	{
 		static memory_manager m;
 		return m;
 	}
+
+	//-----------------------------------------------------------------------
+	//
 
 	inline size_t memory_manager::current_size()
 	{
@@ -16,107 +22,302 @@ namespace umtl
 		return pool_size;
 	}
 
-	inline size_t memory_manager::alloc_total()
+	//-----------------------------------------------------------------------
+	//
+
+	size_t memory_manager::alloc_total()
 	{
 		Locker l(mutex);
 		return alloc_cumul;
 	}
 
-	inline size_t memory_manager::dealloc_total()
+	//-----------------------------------------------------------------------
+	//
+
+	size_t memory_manager::dealloc_total()
 	{
 		return dealloc_cumul;
 	}
 
-	inline void * memory_manager::alloc( size_t size )
+	//-----------------------------------------------------------------------
+	//
+
+	void * memory_manager::alloc( size_t size )
+	{
+		void * p = 0;
+
+		if( size > (size_t)_small_size )
+		{
+			p = big_alloc( size );
+		}
+		else
+		{
+			p = small_alloc( size );
+		}
+
+		return p;
+	}
+
+	//////////////////////////////////////////////////////////////////////////
+	//
+
+	void * memory_manager::big_alloc( size_t size )
 	{
 		Locker l(mutex);
 
 		void * p;
 
-		auto i = blocks.find( size );
-		//auto i = blocks.upper_bound( size );
+		auto i = blocks.lower_bound( size );
 
 		if( i == blocks.end() || i->second.empty() )
 		{
-			p = new_mem( size );
-			if(p)
-				alloc_cumul += size;
-			else
-				throw std::bad_alloc();
+			p = new_big_mem( size );
 		}
 		else
 		{
-			p = search_mem( i );
-			//pool_size -= *((size_t*)p - 1);
+			for( ; i!=blocks.end() && !i->second.empty(); ++ i )
+			{
+				p = search_big_mem( i, size );
+
+				if( p )
+					break;
+			}
+
+			if( !p )
+			{
+				p = new_big_mem( size );
+			}
+			else
+			{
+				//pool_size -= *((size_t*)p - 1);
+				pool_size -= size;
+			}
+		}
+
+		return p;
+	}
+
+	//////////////////////////////////////////////////////////////////////////
+	//
+
+	void * memory_manager::small_alloc( size_t size )
+	{
+		Locker l(mutex);
+
+		void * p;
+
+		auto i = small_blocks.lower_bound( size );
+
+		if( i == small_blocks.end() || i->second.empty() )
+		{
+			p = fast_allocator::alloc( size + sizeof(size_t) );
+			size_t * s = (size_t*)p;
+			s[0] = size;
+			p = &s[1];
+		}
+		else
+		{
+			p = i->second.back();
+
+			i->second.pop_back();
+
 			pool_size -= size;
 		}
 
 		return p;
 	}
 
-	inline void memory_manager::free( void * p )
+	//-----------------------------------------------------------------------
+	//
+
+	void memory_manager::free( void * p )
 	{
 		if(!p) return;
 
-		__int64 address = (__int64)p;
-
 		size_t * rp = (size_t *)(p) - 1;
+
+		size_t size = rp[0];
+
+		if( size > (size_t)_small_size )
+		{
+			big_free( p );
+		}
+		else
+		{
+			small_free( p );
+		}
+	}
+
+	//////////////////////////////////////////////////////////////////////////
+	//
+
+	void memory_manager::big_free( void * p )
+	{
+		if(!p) return;
+
+		size_t * rp = (size_t *)(p) - 2;
+
+		size_t size = rp[1];
+
+		block_partition * partition_address = (block_partition*)(rp[0]);
 
 		{
 			Locker l(mutex);
 
-			//blocks[ rp[0] ].push_back( address );
+			assert( partition_address );
 
-			auto iter = blocks.find( rp[0] );
-
-			if( iter != blocks.end() )
+			if( partition_address )
 			{
-				iter->second.push_back( address );
-			}
-			else
-			{
-				Addresss addresss;
-				addresss.push_back( address );
-				blocks.insert( std::make_pair( rp[0], addresss ) );
+				partition_address->push( rp );
+				blocks[size].insert( partition_address );
 			}
 
-			pool_size += rp[0];
+			pool_size += size;
 		}
 	}
 
-	inline void * memory_manager::alloc_array( size_t size )
+	//////////////////////////////////////////////////////////////////////////
+	//
+
+	void memory_manager::small_free( void * p )
 	{
-		return alloc(size);
+		if(!p) return;
+
+		size_t * rp = (size_t *)(p) - 1;
+
+		size_t size = rp[0];
+
+		{
+			Locker l(mutex);
+
+			small_blocks[size].push_back( (char*)p );
+
+			pool_size += size;
+		}
 	}
 
-	inline void memory_manager::free_array( void * p )
-	{
-		return free(p);
-	}
+	//-----------------------------------------------------------------------
+	//
 
-	inline void * memory_manager::search_mem( Blocks::iterator& i )
+	void * memory_manager::new_big_mem( size_t size )
 	{
-		void * p = (void*)( i->second.back() );
+		size_t need_size = size + sizeof(size_t) + sizeof(size_t);
 
-		i->second.pop_back();
+		block_partition * block = new block_partition( need_size );
+
+		void * p = block->pop( need_size );
+
+		if(p)
+		{
+			size_t * s = (size_t*)p;
+			s[0] = (size_t)block;
+			s[1] = size;
+			p = &s[2];
+			alloc_cumul += size;
+		}
+		else
+		{
+			throw std::bad_alloc();
+		}
 
 		return p;
 	}
 
-	inline void * memory_manager::new_mem( size_t size )
+	//-----------------------------------------------------------------------
+	//
+
+	void * memory_manager::alloc_array( size_t size )
 	{
+		return alloc(size);
+	}
+
+	//-----------------------------------------------------------------------
+	//
+
+	void memory_manager::free_array( void * p )
+	{
+		return free(p);
+	}
+
+	//-----------------------------------------------------------------------
+	//
+
+	void * memory_manager::search_big_mem( Blocks::iterator blockIter, size_t size )
+	{
+		void * p = 0;
+
+		Partitions & partitions = blockIter->second;
+
+		for( auto i = partitions.begin(); i != partitions.end(); ++i )
+		{
+			p = (*i)->pop( size + sizeof(size_t) + sizeof(size_t) );
+
+			if( p )
+			{
+				size_t * s = (size_t*)p;
+				s[0] = (size_t)(*i);
+				s[1] = blockIter->first;
+				p = &s[2];
+				break;
+			}
+		}
+
+		return p;
+	}
+
+	//-----------------------------------------------------------------------
+	//
+
+	void memory_manager::clear()
+	{
+		for( auto i=blocks.begin(); i!=blocks.end(); ++i )
+		{
+			for( auto j=i->second.begin(); j!=i->second.end(); ++j )
+			{
+				if( *j )
+					delete *j;
+			}
+		}
+
+		blocks.clear();
+
+		for( auto i=small_blocks.begin(); i!=small_blocks.end(); ++i )
+		{
+			for( auto j=i->second.begin(); j!=i->second.end(); ++j )
+			{
+				size_t * s = (size_t*)(*j);
+
+				if( s )
+					fast_allocator::dealloc( s-1 );
+			}
+		}
+
+		small_blocks.clear();
+
+		dealloc_cumul += pool_size;
+
+		pool_size = 0;
+	}
+
+	//-----------------------------------------------------------------------
+	//
+
+	void * fast_allocator::alloc( size_t size )
+	{
+		static const int _max_try_count = 10000;
+
 		int try_count = 0;
 
 		void * block = 0;
-		
+
 		for(;;)
 		{
-			block = malloc( size+sizeof(size_t) );
+			block = malloc( size );
 
 			if( block )
 				break;
 
-			if( ++try_count > max_try_count )
+			if( ++try_count > _max_try_count )
 				break;
 
 			// delay
@@ -129,35 +330,17 @@ namespace umtl
 			}
 		}
 
-		if( block )
-		{
-			size_t * s = (size_t*)block;
-
-			s[0] = size;
-
-			block = (void*)(&s[1]);
-		}
-
 		return block;
 	}
 
-	inline void memory_manager::clear()
+	//-----------------------------------------------------------------------
+	//
+
+	void fast_allocator::dealloc( void * p )
 	{
-		std::for_each( blocks.begin(), blocks.end(), 
-			[]( Blocks::value_type & i ) {
-				std::for_each( i.second.begin(), i.second.end(),
-					[]( __int64 a ) {
-						__int64 p = a - sizeof(size_t);
-						::free( (void*)p );
-					}
-				);
-			}
-		);
-
-		blocks.clear();
-
-		dealloc_cumul += pool_size;
-
-		pool_size = 0;
+		if( p )
+			::free(p);
 	}
+
+	//-----------------------------------------------------------------------
 }

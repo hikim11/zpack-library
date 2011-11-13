@@ -15,6 +15,7 @@ namespace umtl
 	class static_alloc
 	{
 	public :
+		virtual ~static_alloc() {}
 
 		inline void * operator new( size_t size )
 		{
