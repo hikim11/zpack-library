@@ -46,6 +46,9 @@
     <Filter Include="parallel">
       <UniqueIdentifier>{5ce05624-8f84-4dd0-8438-48113272e4f8}</UniqueIdentifier>
     </Filter>
+    <Filter Include="static_pool">
+      <UniqueIdentifier>{41e66140-0dc8-407f-922c-ee0166ba3725}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\UI\Console\ArError.h">
@@ -551,6 +554,18 @@
     </ClInclude>
     <ClInclude Include="..\..\Compress\BcjRegister.h">
       <Filter>Compress</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\7z\static_pool\allocator.hpp">
+      <Filter>static_pool</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\7z\static_pool\memory_manager.h">
+      <Filter>static_pool</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\7z\static_pool\memory_manager.hpp">
+      <Filter>static_pool</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\7z\static_pool\static_pool.h">
+      <Filter>static_pool</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

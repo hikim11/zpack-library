@@ -11,6 +11,8 @@
 #include "MyWindows.h"
 #endif
 
+#include "static_pool/static_pool.h"
+
 template <class T>
 inline int MyStringLen(const T *s)
 {
@@ -174,12 +176,14 @@ protected:
     if (newCapacity > kMaxStringSize || newCapacity < _length)
       throw 1052337;
     */
-    T *newBuffer = new T[realCapacity];
+    //T *newBuffer = new T[realCapacity];
+	T* newBuffer = (T*)umtl::memory_manager::get().alloc_array( realCapacity * sizeof(T) );
     if (_capacity > 0)
     {
       for (int i = 0; i < _length; i++)
         newBuffer[i] = _chars[i];
-      delete []_chars;
+      //delete []_chars;
+	  umtl::memory_manager::get().free_array( _chars );
     }
     _chars = newBuffer;
     _chars[_length] = 0;
@@ -231,7 +235,7 @@ public:
     MyStringCopy(_chars, s._chars);
     _length = s._length;
   }
-  ~CStringBase() {  delete []_chars; }
+  ~CStringBase() {  /*delete []_chars;*/ umtl::memory_manager::get().free_array( _chars ); }
 
   operator const T*() const { return _chars;}
 

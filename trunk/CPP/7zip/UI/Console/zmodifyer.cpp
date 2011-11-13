@@ -6,6 +6,7 @@
 #include <list>
 #include "../../../C/LzmaEnc.h"
 #include "../../../C/LzmaDec.h"
+#include "static_pool/static_pool.h"
 
 
 
@@ -168,13 +169,14 @@ unsigned char * zmodifyer::get( UString & file_name, size_t & size, wchar_t cons
 	// 없는 파일이면 작업 중지
 	if( !zdb_->db_.IsEmpty() )
 	{
-		std::list< std::wstring > files;
+		typedef std::list< std::wstring > FileList;
+		FileList files;
 
 		std::wstring tmp = file_name;
 
 		boost::split( files, tmp, boost::is_any_of(L":") );
 
-		for( std::list< std::wstring >::iterator iter = files.begin(); iter != files.end(); ++iter )
+		for( FileList::iterator iter = files.begin(); iter != files.end(); ++iter )
 		{
 			if( !zdb_->folder_.find( *iter ) )
 				return 0;
@@ -517,8 +519,12 @@ void zmodifyer::clearDB()
 	}
 }
 
-static void *ZAlloc(void *, size_t size) { return size ? malloc(size) : 0; }
-static void ZFree(void *, void *address) { if( address ) free(address); }
+//static void *ZAlloc(void *, size_t size) { return size ? malloc(size) : 0; }
+//static void ZFree(void *, void *address) { if( address ) free(address); }
+
+static void *ZAlloc(void *, size_t size) { return umtl::memory_manager::get().alloc(size); }
+static void ZFree(void *, void *address) { umtl::memory_manager::get().free(address); }
+
 static ISzAlloc alloctator = { ZAlloc, ZFree };
 
 bool zmodifyer::compress( unsigned char const * src, size_t srcLen, unsigned char * dest, size_t & destLen, int level /* = 5 */ )

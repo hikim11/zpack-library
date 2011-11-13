@@ -6,6 +6,7 @@
 #include <vector>
 #include <algorithm>
 #include "7zIn.h"
+#include "static_pool/static_pool.h"
 
 
 //---------------------------------------------------------
@@ -36,6 +37,7 @@ public:
 	ZFile * insert( UString const & filename, int index, NArchive::N7z::CFileItem * fileInfo );
 	ZFile * find( UString const & filename );
 	ZFile * find( std::wstring const & filename );
+	ZFile * find( umtl::static_pool::wstring const & filename );
 
 	void	getList( std::vector< std::wstring > & fileList, std::wstring path, bool isRoot = true );
 	void	getList( std::vector< std::pair< std::wstring, ZFile * > > & fileList, std::wstring path, bool isRoot = true );

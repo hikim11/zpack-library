@@ -158,6 +158,10 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClInclude Include="..\..\..\..\C\Aes.h" />
+    <ClInclude Include="..\..\..\7z\static_pool\allocator.hpp" />
+    <ClInclude Include="..\..\..\7z\static_pool\memory_manager.h" />
+    <ClInclude Include="..\..\..\7z\static_pool\memory_manager.hpp" />
+    <ClInclude Include="..\..\..\7z\static_pool\static_pool.h" />
     <ClInclude Include="..\..\Archive\7z\7zAes.h" />
     <ClInclude Include="..\..\Archive\7z\7zDB.h" />
     <ClInclude Include="..\..\Archive\7z\MyAes.h" />
