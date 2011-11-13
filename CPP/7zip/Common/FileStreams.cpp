@@ -559,7 +559,7 @@ void CIOStream::Clear()
 void CIOStream::Release( Byte * p )
 {
 	if( p )
-		memory_manager::get().free(	 p );
+		umtl::memory_manager::get().free( p );
 }
 
 //---------------------------------------------------------
