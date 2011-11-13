@@ -4,11 +4,71 @@
 //#include <hash_map>
 #include <windows.h>
 #include <map>
+//#include <unordered_map>
+#include <unordered_set>
 #include <vector>
+#include <set>
 #include <iostream>
+#include <cassert>
+#include "../block_map/block_map.hpp"
 
 namespace umtl
 {
+	class fast_allocator
+	{
+	public:
+		static void * alloc( size_t size );
+		static void dealloc( void * p );
+	};
+
+	class block_partition
+	{
+	public:
+		typedef block_map< char, fast_allocator > Partitions;
+
+		Partitions partitions_;
+		size_t size_;
+
+		block_partition( size_t need_size = 0 ) : size_(need_size) { resize( need_size ); }
+		
+		inline size_t size()
+		{
+			return size_;
+		}
+
+		inline bool empty() 
+		{
+			return size() == 0;
+		}
+
+		inline void resize( size_t need_size )
+		{
+			clear();
+			partitions_.resize( need_size );
+			size_ = need_size;
+		}
+
+		inline void * pop( size_t need_size )
+		{
+			return partitions_.pop( need_size );
+		}
+
+		inline void push( void * mem )
+		{
+			partitions_.push( mem );
+		}
+
+	private:
+		inline void clear()
+		{
+			partitions_.clear();
+			size_ = 0;
+		}
+
+		block_partition( block_partition const & other );
+		void operator=( block_partition const & other );
+	};
+
 	class memory_manager
 	{
 	public:
@@ -21,18 +81,25 @@ namespace umtl
 			CRITICAL_SECTION & ct;
 		} Locker;
 
-		typedef std::vector<__int64> Addresss;
-		typedef std::map<size_t,Addresss> Blocks;
+		//typedef std::tr1::shared_ptr< block_partition > block_ptr;
+		//typedef std::vector<block_ptr> Addresss;
+		typedef std::tr1::unordered_set< block_partition* > Partitions;
+		typedef std::map<size_t,Partitions> Blocks;
 
-		inline void * alloc( size_t size );
-		inline void free( void * p );
-		inline void * alloc_array( size_t size );
-		inline void free_array( void * p );
-		inline void clear();
-		inline size_t current_size();
-		inline size_t alloc_total();
-		inline size_t dealloc_total();
-		inline static memory_manager & get();
+		typedef std::vector< char* > SmallBuffers;
+		typedef std::map< size_t, SmallBuffers > SmallBlocks;
+
+		void * alloc( size_t size );
+		void free( void * p );
+		void * alloc_array( size_t size ); 
+		void free_array( void * p );
+		void clear();
+
+		size_t current_size();
+		size_t alloc_total();
+		size_t dealloc_total();
+
+		inline static memory_manager & get();                            
 
 		~memory_manager() { 
 			clear();
@@ -43,12 +110,18 @@ namespace umtl
 	private:
 		Mutex mutex;
 		Blocks blocks;
+		SmallBlocks small_blocks;
 		size_t pool_size;
 		size_t alloc_cumul;
 		size_t dealloc_cumul;
 
-		inline void * search_mem( Blocks::iterator& i );
-		inline void * new_mem( size_t size );
+		void * big_alloc( size_t size );
+		void * new_big_mem( size_t size );
+		void * search_big_mem( Blocks::iterator blockIter, size_t size );
+		void big_free( void * p );
+
+		void * small_alloc( size_t size );
+		void small_free( void * p );
 
 		static void outOfMem()
 		{
@@ -61,11 +134,9 @@ namespace umtl
 			InitializeCriticalSection(&mutex);
 			std::set_new_handler( outOfMem );
 		}
-
-		static const int max_try_count = 10000;
+		
+		static int const _small_size = 128;
 	};
-
-
 }
 
 #include "memory_manager.hpp"
