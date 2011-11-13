@@ -6,7 +6,6 @@
 #include <vector>
 #include <algorithm>
 #include "7zIn.h"
-#include "static_pool/static_pool.h"
 
 
 //---------------------------------------------------------

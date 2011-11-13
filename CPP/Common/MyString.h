@@ -11,7 +11,7 @@
 #include "MyWindows.h"
 #endif
 
-#include "static_pool/static_pool.h"
+#include "utill_include.h"
 
 template <class T>
 inline int MyStringLen(const T *s)

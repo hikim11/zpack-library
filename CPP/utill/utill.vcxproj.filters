@@ -1,0 +1,31 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="static_pool">
+      <UniqueIdentifier>{1e4c0b4a-9194-4455-a2d0-b6ac74726f24}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="block_map">
+      <UniqueIdentifier>{1b44505c-0495-4f7b-b3d7-c199a44fc1ff}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="static_pool\static_pool.h">
+      <Filter>static_pool</Filter>
+    </ClInclude>
+    <ClInclude Include="static_pool\allocator.hpp">
+      <Filter>static_pool</Filter>
+    </ClInclude>
+    <ClInclude Include="static_pool\memory_manager.h">
+      <Filter>static_pool</Filter>
+    </ClInclude>
+    <ClInclude Include="block_map\block_map.hpp">
+      <Filter>block_map</Filter>
+    </ClInclude>
+    <ClInclude Include="utill_include.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="static_pool\memory_manager.cpp">
+      <Filter>static_pool</Filter>
+    </ClCompile>
+  </ItemGroup>
+</Project>
