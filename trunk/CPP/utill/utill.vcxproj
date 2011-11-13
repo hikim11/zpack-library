@@ -69,12 +69,14 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClInclude Include="block_map\block_map.hpp" />
+    <ClInclude Include="lexical_cast\lexical_cast.h" />
     <ClInclude Include="static_pool\allocator.hpp" />
     <ClInclude Include="static_pool\memory_manager.h" />
     <ClInclude Include="static_pool\static_pool.h" />
     <ClInclude Include="utill_include.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="lexical_cast\lexcial_cast.cpp" />
     <ClCompile Include="static_pool\memory_manager.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

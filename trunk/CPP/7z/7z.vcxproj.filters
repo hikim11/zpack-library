@@ -4,9 +4,6 @@
     <Filter Include="zpack">
       <UniqueIdentifier>{2e1a220a-3b4e-40d0-a279-ee8d443c7082}</UniqueIdentifier>
     </Filter>
-    <Filter Include="lexical_cast">
-      <UniqueIdentifier>{515cff2b-f8fe-4819-b2f4-62e0cd5094d9}</UniqueIdentifier>
-    </Filter>
     <Filter Include="parallel">
       <UniqueIdentifier>{06b044f4-954c-42c7-be37-8eb7798bae7b}</UniqueIdentifier>
     </Filter>
@@ -23,9 +20,6 @@
   <ItemGroup>
     <ClInclude Include="zpack\zpack.h">
       <Filter>zpack</Filter>
-    </ClInclude>
-    <ClInclude Include="lexical_cast\lexical_cast.h">
-      <Filter>lexical_cast</Filter>
     </ClInclude>
     <ClInclude Include="zpack.h" />
     <ClInclude Include="parallel\for_each.hpp">

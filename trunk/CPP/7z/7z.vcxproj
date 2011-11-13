@@ -308,7 +308,6 @@
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="lexical_cast\lexical_cast.h" />
     <ClInclude Include="parallel\for_each.hpp" />
     <ClInclude Include="parallel\thread.hpp" />
     <ClInclude Include="zpack.h" />
