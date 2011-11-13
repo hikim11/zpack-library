@@ -7,6 +7,9 @@
     <Filter Include="block_map">
       <UniqueIdentifier>{1b44505c-0495-4f7b-b3d7-c199a44fc1ff}</UniqueIdentifier>
     </Filter>
+    <Filter Include="lexical_cast">
+      <UniqueIdentifier>{150dd604-b51c-4939-a120-fcb3e4501ec4}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="static_pool\static_pool.h">
@@ -22,10 +25,16 @@
       <Filter>block_map</Filter>
     </ClInclude>
     <ClInclude Include="utill_include.h" />
+    <ClInclude Include="lexical_cast\lexical_cast.h">
+      <Filter>lexical_cast</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="static_pool\memory_manager.cpp">
       <Filter>static_pool</Filter>
+    </ClCompile>
+    <ClCompile Include="lexical_cast\lexcial_cast.cpp">
+      <Filter>lexical_cast</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>
