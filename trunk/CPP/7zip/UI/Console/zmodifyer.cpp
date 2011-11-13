@@ -138,6 +138,11 @@ void zmodifyer::getInfo( std::vector< std::pair< std::wstring, ZFile* > > & file
 	}
 }
 
+void zmodifyer::release( Byte * p )
+{
+	CIOStream::Release( p );
+}
+
 unsigned char * zmodifyer::get( UString & file_name, size_t & size, wchar_t const * password /* = 0 */ )
 {
 	if( file_name.Length() == 0 )

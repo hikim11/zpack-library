@@ -330,7 +330,10 @@ Byte * zpack::extract( size_t index, size_t & offset, size_t & outSizeProcessed,
 void zpack::release( Byte * p )
 {
 	//if(p) IAlloc_Free(&allocImp, p);
-	if(p) delete[] p;
+	//if(p) delete[] p;
+	locker l(ct_);
+
+	modifyer_.release( p );
 }
 /*
 //////////////////////////////////////////////////////////////////////////////
