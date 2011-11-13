@@ -164,6 +164,7 @@ public:
 	STDMETHOD(Write)(const void *data, UInt32 size, UInt32 *processedSize);
 
 	static Byte * Read(size_t & size);
+	static void Release( Byte * p );
 	static void Enumerate();
 	static void Clear();
 

@@ -68,6 +68,9 @@ public:
 	// 폴더 정보 읽기
 	void getInfo( std::vector< std::pair< std::wstring, ZFile* > > & fileList, wchar_t const * path, wchar_t const * password = 0 );
 
+	// 버퍼 해제
+	void release( Byte * p );
+
 	void clearDB();
 
 	static bool compress( unsigned char const * src, size_t srcLen, unsigned char * dest, size_t & destLen, int level = 5 );
