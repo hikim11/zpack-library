@@ -7,11 +7,16 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "7z", "7z.vcxproj", "{6A0AC9
 	EndProjectSection
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Alone", "..\7zip\Bundles\Alone7z\Alone.vcxproj", "{BCAD83D5-267E-B8AA-FE60-B9A83725D836}"
+	ProjectSection(ProjectDependencies) = postProject
+		{9211EC7D-CE3E-43C8-9090-63AF78DD2052} = {9211EC7D-CE3E-43C8-9090-63AF78DD2052}
+	EndProjectSection
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "dllTest", "..\dllTest\dllTest.vcxproj", "{A7F81956-53AA-45BE-8DA3-653669BB02CD}"
 	ProjectSection(ProjectDependencies) = postProject
 		{6A0AC913-1CA5-4FD6-A461-D45280C7C4DB} = {6A0AC913-1CA5-4FD6-A461-D45280C7C4DB}
 	EndProjectSection
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "utill", "..\utill\utill.vcxproj", "{9211EC7D-CE3E-43C8-9090-63AF78DD2052}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -45,6 +50,14 @@ Global
 		{A7F81956-53AA-45BE-8DA3-653669BB02CD}.Release|Win32.Build.0 = Release|Win32
 		{A7F81956-53AA-45BE-8DA3-653669BB02CD}.ReleaseConsole|Win32.ActiveCfg = Release|Win32
 		{A7F81956-53AA-45BE-8DA3-653669BB02CD}.ReleaseConsole|Win32.Build.0 = Release|Win32
+		{9211EC7D-CE3E-43C8-9090-63AF78DD2052}.Debug|Win32.ActiveCfg = Debug|Win32
+		{9211EC7D-CE3E-43C8-9090-63AF78DD2052}.Debug|Win32.Build.0 = Debug|Win32
+		{9211EC7D-CE3E-43C8-9090-63AF78DD2052}.DebugConsole|Win32.ActiveCfg = Debug|Win32
+		{9211EC7D-CE3E-43C8-9090-63AF78DD2052}.DebugConsole|Win32.Build.0 = Debug|Win32
+		{9211EC7D-CE3E-43C8-9090-63AF78DD2052}.Release|Win32.ActiveCfg = Release|Win32
+		{9211EC7D-CE3E-43C8-9090-63AF78DD2052}.Release|Win32.Build.0 = Release|Win32
+		{9211EC7D-CE3E-43C8-9090-63AF78DD2052}.ReleaseConsole|Win32.ActiveCfg = Release|Win32
+		{9211EC7D-CE3E-43C8-9090-63AF78DD2052}.ReleaseConsole|Win32.Build.0 = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

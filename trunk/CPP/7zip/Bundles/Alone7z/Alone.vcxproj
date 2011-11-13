@@ -42,6 +42,8 @@
     <OutDir>.\lib\</OutDir>
     <IntDir>.\Release\</IntDir>
     <LinkIncremental>false</LinkIncremental>
+    <IncludePath>..\..\..\utill\;$(IncludePath)</IncludePath>
+    <ReferencePath>..\utill\;$(ReferencePath)</ReferencePath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <OutDir>.\lib\</OutDir>
@@ -49,6 +51,8 @@
     <LinkIncremental>true</LinkIncremental>
     <GenerateManifest>true</GenerateManifest>
     <TargetName>$(ProjectName)D</TargetName>
+    <IncludePath>..\..\..\utill\;$(IncludePath)</IncludePath>
+    <ReferencePath>..\utill\;$(ReferencePath)</ReferencePath>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <ClCompile>
@@ -158,10 +162,6 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClInclude Include="..\..\..\..\C\Aes.h" />
-    <ClInclude Include="..\..\..\7z\static_pool\allocator.hpp" />
-    <ClInclude Include="..\..\..\7z\static_pool\memory_manager.h" />
-    <ClInclude Include="..\..\..\7z\static_pool\memory_manager.hpp" />
-    <ClInclude Include="..\..\..\7z\static_pool\static_pool.h" />
     <ClInclude Include="..\..\Archive\7z\7zAes.h" />
     <ClInclude Include="..\..\Archive\7z\7zDB.h" />
     <ClInclude Include="..\..\Archive\7z\MyAes.h" />
