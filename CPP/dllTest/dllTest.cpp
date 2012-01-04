@@ -7,7 +7,6 @@
 #include <windows.h>
 #include <fstream>
 #include <boost/algorithm/string.hpp>
-#include <omp.h>
 
 int _tmain(int argc, _TCHAR* argv[])
 {
@@ -69,12 +68,10 @@ int _tmain(int argc, _TCHAR* argv[])
 	std::wcout << s << std::endl;
 	*/
 
-	#pragma omp parallel for schedule(guided)
-	for( int i=0; i<1000; ++i )
-	{
-		ZpackAdd( L"한글.7z", L"test2.cpp", 5, L"123" );
-		ZpackExtract( L"한글.7z", L"", L"123", true, L"123" );
-	}
+	//ZpackAdd( L"한글.7z", L"test2.cpp", 5, L"123" );
+	//ZpackExtract( L"0801_battle_0102.rws.7z", L"", L"", true, L"" );
+
+	ZpackFolderInfo( L"test.7z", L"a.txt", L"" );
 
 	return 0;
 }

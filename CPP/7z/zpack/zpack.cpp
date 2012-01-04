@@ -500,7 +500,7 @@ bool zpack::extract( std::wstring file_names, std::wstring outDir, bool fullPath
 
 	try
 	{
-		modifyer_.extract( names, password.empty() ? 0 : password.c_str(), outDir.empty() ? 0 : outDir.c_str(), fullPaths );
+		result = modifyer_.extract( names, password.empty() ? 0 : password.c_str(), outDir.empty() ? 0 : outDir.c_str(), fullPaths );
 	}
 	catch (...)
 	{

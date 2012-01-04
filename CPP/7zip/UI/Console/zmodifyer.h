@@ -54,7 +54,7 @@ public:
 	~zmodifyer();
 
 	// file_name.empty() 이면 모든 파일 압축해제
-	void extract(UStringVector & file_names, wchar_t const * password = 0, wchar_t const * outDir = 0, bool allPath = true);
+	bool extract(UStringVector & file_names, wchar_t const * password = 0, wchar_t const * outDir = 0, bool allPath = true);
 
 	// 파일 추가 또는 업데이트
 	void add( UStringVector & file_names, int level = 5, wchar_t const * password = 0 );
