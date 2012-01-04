@@ -263,7 +263,7 @@ unsigned char * zmodifyer::get( UString & file_name, size_t & size, wchar_t cons
 }
 
 // file_name.empty() 이면 모든 파일 압축해제
-void zmodifyer::extract(UStringVector & file_names, wchar_t const * password, wchar_t const * outDir, bool allPath)
+bool zmodifyer::extract(UStringVector & file_names, wchar_t const * password, wchar_t const * outDir, bool allPath)
 {
 	// 커맨드 스트링
 	UStringVector commandStrings;
@@ -305,7 +305,8 @@ void zmodifyer::extract(UStringVector & file_names, wchar_t const * password, wc
 	CIntVector formatIndices;
 	if (!codecs_->FindFormatForArchiveType(options.ArcType, formatIndices))
 	{
-		throw kUnsupportedArcTypeMessage;
+		//throw kUnsupportedArcTypeMessage;
+		return false;
 	}
 
 	bool isExtractGroupCommand = options.Command.IsFromExtractGroup();
@@ -314,7 +315,8 @@ void zmodifyer::extract(UStringVector & file_names, wchar_t const * password, wc
 		(isExtractGroupCommand ||
 		options.Command.CommandType == NCommandType::kList ||
 		options.Command.IsFromUpdateGroup()))
-		throw kNoFormats;
+		return false;
+		//throw kNoFormats;
 
 	// 압축 해제
 	if (isExtractGroupCommand)
@@ -363,7 +365,12 @@ void zmodifyer::extract(UStringVector & file_names, wchar_t const * password, wc
 			options.ArchivePathsFullSorted,
 			options.WildcardCensor.Pairs.Front().Head,
 			eo, &openCallback, ecs, errorMessage, stat, zdb_);
+
+		if( result == S_OK )
+			return true;
 	}
+
+	return false;
 }
 
 void zmodifyer::add( UStringVector & file_names, int level, wchar_t const * password )
