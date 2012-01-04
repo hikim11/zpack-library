@@ -490,7 +490,7 @@ bool zpack::extract( std::wstring file_names, std::wstring outDir, bool fullPath
 
 	WorkDirSetting dirSetting( workDir_, orgDir_ );
 
-	bool result = true;
+	bool result = false;
 
 	close();
 	
