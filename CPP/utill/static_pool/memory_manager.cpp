@@ -61,13 +61,13 @@ namespace umtl
 
 		auto i = blocks.lower_bound( size );
 
-		if( i == blocks.end() || i->second.empty() )
+		if( i == blocks.end() )
 		{
 			p = new_big_mem( size );
 		}
 		else
 		{
-			for( ; i!=blocks.end() && !i->second.empty(); ++ i )
+			for( ; i!=blocks.end(); ++ i )
 			{
 				p = search_big_mem( i, size );
 
