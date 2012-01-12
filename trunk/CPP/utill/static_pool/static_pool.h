@@ -19,20 +19,20 @@ namespace umtl
 
 		inline void * operator new( size_t size )
 		{
-#if !defined(NOT_USE_STATIC_POOL) && !defined(_DEBUG)
-			return memory_manager::get().alloc(size);
-#else
+//#if !defined(NOT_USE_STATIC_POOL) && !defined(_DEBUG)
+			//return memory_manager::get().alloc(size);
+//#else
 			return ::operator new(size);
-#endif
+//#endif
 		}
 
 		inline void operator delete( void * p )
 		{
-#if !defined(NOT_USE_STATIC_POOL) && !defined(_DEBUG)
-			memory_manager::get().free(p);
-#else
+//#if !defined(NOT_USE_STATIC_POOL) && !defined(_DEBUG)
+	//		memory_manager::get().free(p);
+//#else
 			::operator delete(p);
-#endif
+//#endif
 		}
 		/*
 		inline void operator delete( void * p, size_t size)
@@ -46,21 +46,21 @@ namespace umtl
 		*/
 		inline void * operator new[](size_t size)
 		{
-#if !defined(NOT_USE_STATIC_POOL) && !defined(_DEBUG)
-			return memory_manager::get().alloc_array(size);
-#else
+//#if !defined(NOT_USE_STATIC_POOL) && !defined(_DEBUG)
+			//return memory_manager::get().alloc_array(size);
+//#else
 			return ::operator new[](size);
-#endif
+//#endif
 
 		}
 
 		inline void operator delete[]( void * p )
 		{
-#if !defined(NOT_USE_STATIC_POOL) && !defined(_DEBUG)
-			memory_manager::get().free_array(p);
-#else
+//#if !defined(NOT_USE_STATIC_POOL) && !defined(_DEBUG)
+			//memory_manager::get().free_array(p);
+//#else
 			::operator delete[](p);
-#endif
+//#endif
 		}
 	};
 }

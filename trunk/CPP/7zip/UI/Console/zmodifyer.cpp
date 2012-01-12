@@ -534,8 +534,11 @@ void zmodifyer::clearDB()
 //static void *ZAlloc(void *, size_t size) { return size ? malloc(size) : 0; }
 //static void ZFree(void *, void *address) { if( address ) free(address); }
 
-static void *ZAlloc(void *, size_t size) { return umtl::memory_manager::get().alloc(size); }
-static void ZFree(void *, void *address) { umtl::memory_manager::get().free(address); }
+//static void *ZAlloc(void *, size_t size) { return umtl::memory_manager::get().alloc(size); }
+//static void ZFree(void *, void *address) { umtl::memory_manager::get().free(address); }
+
+static void *ZAlloc(void *, size_t size) { return malloc(size); }
+static void ZFree(void *, void *address) { if( address ) free(address); }
 
 static ISzAlloc alloctator = { ZAlloc, ZFree };
 

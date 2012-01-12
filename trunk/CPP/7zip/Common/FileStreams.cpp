@@ -472,8 +472,8 @@ Byte * CIOStream::Read(size_t & size)
 
 STDMETHODIMP CIOStream::Write(const void *data, UInt32 size, UInt32 *processedSize)
 {
-	//Byte * buf = new Byte[size+1];
-	Byte * buf = (Byte*)umtl::memory_manager::get().alloc(size+1);
+	Byte * buf = new Byte[size+1];
+	//Byte * buf = (Byte*)umtl::memory_manager::get().alloc(size+1);
 
 	memcpy_s( buf, size, data, size );
 
@@ -495,8 +495,8 @@ void CIOStream::Enumerate()
 {
 	if( buffers_.size() > 1 )
 	{
-		//Byte * buf = new Byte[ totalSize_ + 1 ];
-		Byte * buf = (Byte*)umtl::memory_manager::get().alloc( totalSize_ + 1 );
+		Byte * buf = new Byte[ totalSize_ + 1 ];
+		//Byte * buf = (Byte*)umtl::memory_manager::get().alloc( totalSize_ + 1 );
 
 		size_t copiedSize = 0;
 
@@ -544,8 +544,8 @@ void CIOStream::Clear()
 		std::for_each( buffers_.begin(), buffers_.end(),
 			[]( Buffer & buffer )
 			{
-				//delete [] buffer.buf;
-				umtl::memory_manager::get().free( buffer.buf );
+				delete [] buffer.buf;
+				//umtl::memory_manager::get().free( buffer.buf );
 			}
 		);
 
@@ -559,7 +559,7 @@ void CIOStream::Clear()
 void CIOStream::Release( Byte * p )
 {
 	if( p )
-		umtl::memory_manager::get().free( p );
+		free(p);//umtl::memory_manager::get().free( p );
 }
 
 //---------------------------------------------------------
