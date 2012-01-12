@@ -29,20 +29,20 @@ namespace umtl
 		}
 
 		inline pointer allocate(size_type n, const_pointer = 0) {
-#if !defined(NOT_USE_STATIC_POOL) && !defined(_DEBUG)
-			void* p = memory_manager::get().alloc(n * sizeof(T));
-#else
+//#if !defined(NOT_USE_STATIC_POOL) && !defined(_DEBUG)
+			//void* p = memory_manager::get().alloc(n * sizeof(T));
+//#else
 			void* p = ::operator new( n * sizeof(T) );
-#endif
+//#endif
 			return static_cast<pointer>(p);
 		}
 
 		inline void deallocate(pointer p, size_type) {
-#if !defined(NOT_USE_STATIC_POOL) && !defined(_DEBUG)
-			memory_manager::get().free(p);
-#else
+//#if !defined(NOT_USE_STATIC_POOL) && !defined(_DEBUG)
+			//memory_manager::get().free(p);
+//#else
 			::operator delete(p);
-#endif
+//#endif
 		}
 
 		inline size_type max_size() const { 
