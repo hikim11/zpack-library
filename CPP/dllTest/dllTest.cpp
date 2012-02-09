@@ -71,7 +71,9 @@ int _tmain(int argc, _TCHAR* argv[])
 	//ZpackAdd( L"한글.7z", L"test2.cpp", 5, L"123" );
 	//ZpackExtract( L"0801_battle_0102.rws.7z", L"", L"", true, L"" );
 
-	ZpackFolderInfo( L"test.7z", L"a.txt", L"" );
+	//ZpackFolderInfo( L"한글.7z", L"a.txt", L"" );
+	//ZpackExtract( L"test.rws.7z", L"", L"", true, L"" );
+	ZpackExtract( L"한글.7z", L"", L"", true, L"" );
 
 	return 0;
 }

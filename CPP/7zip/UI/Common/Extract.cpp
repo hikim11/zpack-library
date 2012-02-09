@@ -222,6 +222,9 @@ HRESULT DecompressArchives(
   {
     RINOK(extractCallback->SetTotal(totalPackSize));
   }
+
+  HRESULT extrackResult = S_FALSE;
+
   for (i = 0; i < numArcs; i++)
   {
     const UString &arcPath = arcPaths[i];
@@ -317,13 +320,17 @@ HRESULT DecompressArchives(
     arc.MTime = fi.MTime;
 
     UInt64 packProcessed;
-    RINOK(DecompressArchive(arc,
+
+    extrackResult = DecompressArchive(arc,
         fi.Size + archiveLink.VolumesSize,
-        wildcardCensor, options, extractCallback, extractCallbackSpec, errorMessage, packProcessed, zdb));
+        wildcardCensor, options, extractCallback, extractCallbackSpec, errorMessage, packProcessed, zdb);
+
     if (!options.StdInMode)
       packProcessed = fi.Size + archiveLink.VolumesSize;
+
     extractCallbackSpec->LocalProgressSpec->InSize += packProcessed;
     extractCallbackSpec->LocalProgressSpec->OutSize = extractCallbackSpec->UnpackSize;
+
     if (!errorMessage.IsEmpty())
       return E_FAIL;
   }
@@ -334,5 +341,5 @@ HRESULT DecompressArchives(
 
   stat.NumArchives = arcPaths.Size();
   stat.PackSize = extractCallbackSpec->LocalProgressSpec->InSize;
-  return S_OK;
+  return extrackResult;
 }
